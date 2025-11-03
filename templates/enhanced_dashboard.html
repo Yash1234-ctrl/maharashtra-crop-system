@@ -1,0 +1,2622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maharashtra AI Crop Forecasting System - Enhanced Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_key }}&callback=initMap"></script>
+    <style>
+        body { 
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        .glass-morphism {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .gradient-text {
+            background: linear-gradient(45deg, #10b981, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .sidebar-item:hover {
+            background: rgba(16, 185, 129, 0.1);
+            border-left: 4px solid #10b981;
+        }
+        .tab-active {
+            background: #10b981 !important;
+            color: white !important;
+        }
+        .upload-zone {
+            border: 2px dashed #10b981;
+            transition: all 0.3s ease;
+        }
+        .upload-zone:hover {
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.05);
+        }
+        .risk-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+        .fertilizer-option {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .fertilizer-option:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+        .fertilizer-option.selected {
+            border: 2px solid #10b981;
+            background: rgba(16, 185, 129, 0.1);
+        }
+        #map {
+            height: 400px;
+            width: 100%;
+        }
+        .health-graph {
+            height: 300px;
+        }
+        .trend-graph {
+            height: 250px;
+        }
+    </style>
+</head>
+<body class="min-h-screen text-gray-100">
+    
+    <!-- Main Layout -->
+    <div class="flex">
+        
+        <!-- Enhanced Sidebar -->
+        <div class="w-64 min-h-screen glass-morphism border-r border-gray-700">
+            <div class="p-6">
+                <!-- Logo -->
+                <div class="flex items-center space-x-3 mb-8">
+                    <div class="w-10 h-10 bg-gradient-to-r from-green-500 to-blue-500 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-seedling text-white text-lg"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-sm font-bold gradient-text">Farm Information</h1>
+                    </div>
+                </div>
+                
+                <!-- Location & Crop Details -->
+                <div class="space-y-6">
+                    <div class="space-y-2">
+                        <div class="flex items-center text-red-400 text-sm">
+                            <i class="fas fa-map-marker-alt mr-2"></i>
+                            Location & Crop Details
+                        </div>
+                        
+                        <!-- District Selection -->
+                        <div class="space-y-2">
+                            <label class="text-xs text-gray-400">Select District</label>
+                            <select id="districtSelect" onchange="updateHealthTrends()" class="w-full bg-gray-800 border border-gray-600 rounded-lg p-3 text-sm focus:border-green-500">
+                                <!-- Western Maharashtra -->
+                                <optgroup label="Western Maharashtra">
+                                    <option value="Pune">Pune</option>
+                                    <option value="Ahmednagar">Ahmednagar</option>
+                                    <option value="Nashik">Nashik</option>
+                                    <option value="Kolhapur">Kolhapur</option>
+                                    <option value="Sangli">Sangli</option>
+                                    <option value="Satara">Satara</option>
+                                    <option value="Solapur">Solapur</option>
+                                </optgroup>
+                                <!-- Konkan (Coastal) -->
+                                <optgroup label="Konkan">
+                                    <option value="Mumbai City">Mumbai City</option>
+                                    <option value="Mumbai Suburban">Mumbai Suburban</option>
+                                    <option value="Thane">Thane</option>
+                                    <option value="Raigad">Raigad</option>
+                                    <option value="Ratnagiri">Ratnagiri</option>
+                                    <option value="Sindhudurg">Sindhudurg</option>
+                                </optgroup>
+                                <!-- Vidarbha -->
+                                <optgroup label="Vidarbha">
+                                    <option value="Nagpur">Nagpur</option>
+                                    <option value="Akola">Akola</option>
+                                    <option value="Amravati">Amravati</option>
+                                    <option value="Buldhana">Buldhana</option>
+                                    <option value="Yavatmal">Yavatmal</option>
+                                    <option value="Washim">Washim</option>
+                                    <option value="Wardha">Wardha</option>
+                                    <option value="Chandrapur">Chandrapur</option>
+                                    <option value="Gadchiroli">Gadchiroli</option>
+                                    <option value="Gondia">Gondia</option>
+                                    <option value="Bhandara">Bhandara</option>
+                                </optgroup>
+                                <!-- Marathwada -->
+                                <optgroup label="Marathwada">
+                                    <option value="Aurangabad">Aurangabad</option>
+                                    <option value="Jalna">Jalna</option>
+                                    <option value="Parbhani">Parbhani</option>
+                                    <option value="Hingoli">Hingoli</option>
+                                    <option value="Nanded">Nanded</option>
+                                    <option value="Latur">Latur</option>
+                                    <option value="Osmanabad">Osmanabad</option>
+                                    <option value="Beed">Beed</option>
+                                </optgroup>
+                                <!-- Khandesh (North Maharashtra) -->
+                                <optgroup label="Khandesh">
+                                    <option value="Dhule">Dhule</option>
+                                    <option value="Jalgaon">Jalgaon</option>
+                                    <option value="Nandurbar">Nandurbar</option>
+                                </optgroup>
+                            </select>
+                        </div>
+                        
+                        <!-- Crop Type -->
+                        <div class="space-y-2">
+                            <label class="text-xs text-gray-400">Select Crop Type</label>
+                            <select id="cropSelect" onchange="updatePestTrends(); updateFertilizerRecommendations();" class="w-full bg-gray-800 border border-gray-600 rounded-lg p-3 text-sm focus:border-green-500">
+                                <!-- Cash Crops -->
+                                <optgroup label="Cash Crops">
+                                    <option value="Cotton">Cotton</option>
+                                    <option value="Sugarcane">Sugarcane</option>
+                                    <option value="Grapes">Grapes</option>
+                                </optgroup>
+                                <!-- Food Grains -->
+                                <optgroup label="Food Grains">
+                                    <option value="Rice">Rice</option>
+                                    <option value="Wheat">Wheat</option>
+                                    <option value="Jowar">Jowar (Sorghum)</option>
+                                    <option value="Bajra">Bajra (Pearl Millet)</option>
+                                    <option value="Maize">Maize</option>
+                                </optgroup>
+                                <!-- Pulses -->
+                                <optgroup label="Pulses">
+                                    <option value="Tur">Tur (Arhar)</option>
+                                    <option value="Moong">Moong</option>
+                                    <option value="Urad">Urad</option>
+                                    <option value="Gram">Gram (Chana)</option>
+                                </optgroup>
+                                <!-- Fruits -->
+                                <optgroup label="Fruits">
+                                    <option value="Mango">Mango</option>
+                                    <option value="Orange">Orange</option>
+                                    <option value="Banana">Banana</option>
+                                    <option value="Pomegranate">Pomegranate</option>
+                                    <option value="Cashew">Cashew</option>
+                                </optgroup>
+                                <!-- Vegetables -->
+                                <optgroup label="Vegetables">
+                                    <option value="Onion">Onion</option>
+                                    <option value="Tomato">Tomato</option>
+                                    <option value="Potato">Potato</option>
+                                    <option value="Chili">Chili</option>
+                                    <option value="Brinjal">Brinjal</option>
+                                </optgroup>
+                                <!-- Spices -->
+                                <optgroup label="Spices">
+                                    <option value="Turmeric">Turmeric</option>
+                                    <option value="Coriander">Coriander</option>
+                                    <option value="Cumin">Cumin</option>
+                                </optgroup>
+                            </select>
+                        </div>
+                        
+                        <!-- Growth Stage -->
+                        <div class="space-y-2">
+                            <label class="text-xs text-gray-400">Current Growth Stage</label>
+                            <select id="growthStage" class="w-full bg-gray-800 border border-gray-600 rounded-lg p-3 text-sm focus:border-green-500">
+                                <option value="Sowing">Sowing</option>
+                                <option value="Vegetative">Vegetative</option>
+                                <option value="Flowering">Flowering</option>
+                                <option value="Fruiting">Fruiting</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Farm Area -->
+                        <div class="space-y-2">
+                            <label class="text-xs text-gray-400">Farm Area (Hectares)</label>
+                            <div class="flex items-center space-x-2">
+                                <input type="number" id="farmArea" value="1.00" min="0.1" step="0.1" 
+                                       class="flex-1 bg-gray-800 border border-gray-600 rounded-lg p-3 text-sm focus:border-green-500">
+                                <button onclick="adjustFarmArea(-0.1)" class="w-8 h-8 bg-gray-700 rounded text-xs hover:bg-gray-600">-</button>
+                                <button onclick="adjustFarmArea(0.1)" class="w-8 h-8 bg-gray-700 rounded text-xs hover:bg-gray-600">+</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Enhanced Soil Testing Data -->
+                    <div class="space-y-2">
+                        <div class="flex items-center text-blue-400 text-sm">
+                            <i class="fas fa-flask mr-2"></i>
+                            Soil Testing Data
+                        </div>
+                        
+                        <!-- Soil Test Upload -->
+                        <div class="space-y-3">
+                            <div class="upload-zone rounded-lg p-4 text-center">
+                                <i class="fas fa-upload text-2xl text-blue-400 mb-2"></i>
+                                <p class="text-xs text-gray-400 mb-2">Upload Soil Test Report</p>
+                                <input type="file" id="soilTestFile" accept=".pdf,.jpg,.jpeg,.png" class="hidden">
+                                <button onclick="document.getElementById('soilTestFile').click()" 
+                                        class="px-3 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700">
+                                    <i class="fas fa-file-upload mr-1"></i>
+                                    Browse File
+                                </button>
+                            </div>
+                            
+                            <!-- Analyze Button -->
+                            <button id="analyzeSoilBtn" onclick="analyzeSoilTest()" 
+                                    class="w-full bg-gradient-to-r from-blue-500 to-green-500 text-white py-2 rounded-lg font-medium text-sm hover:from-blue-600 hover:to-green-600 disabled:opacity-50">
+                                <i class="fas fa-search mr-2"></i>
+                                Analyze Soil Test
+                            </button>
+                            
+                            <!-- Manual Input Toggle -->
+                            <div class="flex items-center justify-center">
+                                <button onclick="toggleManualInput()" class="text-xs text-gray-400 hover:text-gray-300">
+                                    <i class="fas fa-keyboard mr-1"></i>
+                                    Enter values manually
+                                </button>
+                            </div>
+                            
+                            <!-- Manual Input Section (Hidden by default) -->
+                            <div id="manualSoilInput" class="hidden space-y-3">
+                                <div class="grid grid-cols-3 gap-2">
+                                    <div>
+                                        <label class="text-xs text-gray-400">N</label>
+                                        <input type="number" id="manualN" class="w-full bg-gray-800 border border-gray-600 rounded p-1 text-xs">
+                                    </div>
+                                    <div>
+                                        <label class="text-xs text-gray-400">P</label>
+                                        <input type="number" id="manualP" class="w-full bg-gray-800 border border-gray-600 rounded p-1 text-xs">
+                                    </div>
+                                    <div>
+                                        <label class="text-xs text-gray-400">K</label>
+                                        <input type="number" id="manualK" class="w-full bg-gray-800 border border-gray-600 rounded p-1 text-xs">
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div>
+                                        <label class="text-xs text-gray-400">pH</label>
+                                        <input type="number" id="manualPH" step="0.1" class="w-full bg-gray-800 border border-gray-600 rounded p-1 text-xs">
+                                    </div>
+                                    <div>
+                                        <label class="text-xs text-gray-400">Moisture %</label>
+                                        <input type="number" id="manualMoisture" class="w-full bg-gray-800 border border-gray-600 rounded p-1 text-xs">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="flex-1 min-h-screen">
+            
+            <!-- Header -->
+            <div class="p-6">
+                <div class="glass-morphism rounded-2xl p-6 mb-6">
+                    <div class="flex items-center justify-center mb-4">
+                        <div class="flex items-center space-x-3">
+                            <i class="fas fa-seedling text-2xl text-green-400"></i>
+                            <h1 class="text-2xl font-bold gradient-text">Maharashtra AI Crop Forecasting System</h1>
+                        </div>
+                        <div class="ml-auto">
+                            <button onclick="exportDashboardData()" class="px-4 py-2 bg-gray-700 text-white rounded-lg text-sm hover:bg-gray-600">
+                                <i class="fas fa-download mr-2"></i>
+                                Export Data
+                            </button>
+                        </div>
+                    </div>
+                    <p class="text-center text-gray-300">Comprehensive Crop Health, Weather, Soil Analysis & Pest Risk Prediction</p>
+                </div>
+                
+                <!-- Navigation Tabs -->
+                <div class="flex space-x-1 mb-6">
+                    <button onclick="showTab('crop-health')" class="tab-btn tab-active px-4 py-2 rounded-lg text-sm font-medium flex items-center space-x-2">
+                        <i class="fas fa-leaf"></i>
+                        <span>Crop Health</span>
+                    </button>
+                    <button onclick="showTab('health-trends')" class="tab-btn px-4 py-2 rounded-lg text-sm font-medium flex items-center space-x-2 bg-gray-700 text-gray-300">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Health Trends</span>
+                    </button>
+                    <button onclick="showTab('fertilizer')" class="tab-btn px-4 py-2 rounded-lg text-sm font-medium flex items-center space-x-2 bg-gray-700 text-gray-300">
+                        <i class="fas fa-seedling"></i>
+                        <span>Fertilizer</span>
+                    </button>
+                    <button onclick="showTab('pest-risk')" class="tab-btn px-4 py-2 rounded-lg text-sm font-medium flex items-center space-x-2 bg-gray-700 text-gray-300">
+                        <i class="fas fa-bug"></i>
+                        <span>Pest Risk</span>
+                    </button>
+                    <button onclick="showTab('zone-mapping')" class="tab-btn px-4 py-2 rounded-lg text-sm font-medium flex items-center space-x-2 bg-gray-700 text-gray-300">
+                        <i class="fas fa-map"></i>
+                        <span>Zone Mapping</span>
+                    </button>
+                    <button onclick="showTab('dashboard')" class="tab-btn px-4 py-2 rounded-lg text-sm font-medium flex items-center space-x-2 bg-gray-700 text-gray-300">
+                        <i class="fas fa-chart-bar"></i>
+                        <span>Dashboard</span>
+                    </button>
+                </div>
+                
+                <!-- Tab Content -->
+                
+                <!-- Crop Health Tab -->
+                <div id="crop-health" class="tab-content">
+                    <div class="glass-morphism rounded-2xl p-6 mb-6">
+                        <h2 class="text-xl font-bold text-green-400 mb-6 flex items-center">
+                            <i class="fas fa-leaf mr-3"></i>
+                            Crop Health Monitoring
+                        </h2>
+                        
+                        <!-- Upload Crop Image -->
+                        <div class="mb-6">
+                            <h3 class="text-lg font-semibold mb-4">Upload Crop Image</h3>
+                            <p class="text-gray-400 text-sm mb-4">Choose an image of crop leaf/plant</p>
+                            
+                            <div id="uploadZone" class="upload-zone rounded-lg p-6 text-center cursor-pointer">
+                                <div class="mb-4">
+                                    <i class="fas fa-cloud-upload-alt text-3xl text-green-400"></i>
+                                </div>
+                                <p class="text-white font-medium mb-2">Drag and drop file here</p>
+                                <p class="text-gray-400 text-sm mb-4">Limit 200MB per file • JPG, JPEG, PNG</p>
+                                <button id="browseBtn" class="px-6 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600">
+                                    Browse files
+                                </button>
+                                <input type="file" id="imageInput" class="hidden" accept="image/*">
+                            </div>
+                            
+                            <!-- Image Preview -->
+                            <div id="imagePreview" class="hidden mt-4">
+                                <img id="previewImg" class="w-full h-48 object-cover rounded-lg">
+                            </div>
+                        </div>
+
+                        <!-- NDVI Analysis -->
+                        <div class="mb-6">
+                            <h3 class="text-lg font-semibold mb-4">NDVI Analysis</h3>
+                            <div class="grid grid-cols-3 gap-3">
+                                <div>
+                                    <label class="block text-gray-400 text-xs mb-1">NIR Value</label>
+                                    <div class="flex items-center space-x-2">
+                                        <button onclick="adjustNDVI('nir', -0.01)" class="w-6 h-6 bg-gray-700 rounded text-xs hover:bg-gray-600">-</button>
+                                        <input type="number" id="nirValue" value="0.80" step="0.01" oninput="calculateNDVI()" 
+                                               class="flex-1 bg-gray-800 border border-gray-600 rounded p-2 text-sm text-center">
+                                        <button onclick="adjustNDVI('nir', 0.01)" class="w-6 h-6 bg-gray-700 rounded text-xs hover:bg-gray-600">+</button>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-gray-400 text-xs mb-1">Red Value</label>
+                                    <div class="flex items-center space-x-2">
+                                        <button onclick="adjustNDVI('red', -0.01)" class="w-6 h-6 bg-gray-700 rounded text-xs hover:bg-gray-600">-</button>
+                                        <input type="number" id="redValue" value="0.30" step="0.01" oninput="calculateNDVI()" 
+                                               class="flex-1 bg-gray-800 border border-gray-600 rounded p-2 text-sm text-center">
+                                        <button onclick="adjustNDVI('red', 0.01)" class="w-6 h-6 bg-gray-700 rounded text-xs hover:bg-gray-600">+</button>
+                                    </div>
+                                </div>
+                                <div class="text-center">
+                                    <label class="block text-gray-400 text-xs mb-1">NDVI Index</label>
+                                    <div class="text-2xl font-bold text-green-400 bg-gray-800 rounded p-2" id="ndviIndex">0.455</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Comprehensive Input Section -->
+                        <div class="mb-6">
+                            <h3 class="text-lg font-semibold mb-4">Complete Farm Analysis</h3>
+                            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                
+                                <!-- Soil Data Input -->
+                                <div class="glass-morphism rounded-lg p-4">
+                                    <h4 class="font-semibold text-blue-400 mb-3 flex items-center">
+                                        <i class="fas fa-seedling mr-2"></i>
+                                        Soil Data
+                                    </h4>
+                                    <div class="space-y-3">
+                                        <div class="grid grid-cols-3 gap-2">
+                                            <div>
+                                                <label class="block text-gray-400 text-xs mb-1">Nitrogen (N)</label>
+                                                <input type="number" id="soilN" value="50" class="w-full bg-gray-800 border border-gray-600 rounded p-2 text-sm">
+                                            </div>
+                                            <div>
+                                                <label class="block text-gray-400 text-xs mb-1">Phosphorus (P)</label>
+                                                <input type="number" id="soilP" value="30" class="w-full bg-gray-800 border border-gray-600 rounded p-2 text-sm">
+                                            </div>
+                                            <div>
+                                                <label class="block text-gray-400 text-xs mb-1">Potassium (K)</label>
+                                                <input type="number" id="soilK" value="40" class="w-full bg-gray-800 border border-gray-600 rounded p-2 text-sm">
+                                            </div>
+                                        </div>
+                                        <div class="grid grid-cols-2 gap-2">
+                                            <div>
+                                                <label class="block text-gray-400 text-xs mb-1">Soil pH</label>
+                                                <input type="number" id="soilPH" value="6.5" step="0.1" class="w-full bg-gray-800 border border-gray-600 rounded p-2 text-sm">
+                                            </div>
+                                            <div>
+                                                <label class="block text-gray-400 text-xs mb-1">Moisture %</label>
+                                                <input type="number" id="soilMoisture" value="45" class="w-full bg-gray-800 border border-gray-600 rounded p-2 text-sm">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Weather Data Input -->
+                                <div class="glass-morphism rounded-lg p-4">
+                                    <h4 class="font-semibold text-yellow-400 mb-3 flex items-center">
+                                        <i class="fas fa-cloud-sun mr-2"></i>
+                                        Weather Data
+                                    </h4>
+                                    <div class="space-y-3">
+                                        <div>
+                                            <label class="block text-gray-400 text-xs mb-1">Temperature (°C)</label>
+                                            <input type="number" id="weatherTemp" placeholder="Auto-detect" class="w-full bg-gray-800 border border-gray-600 rounded p-2 text-sm">
+                                        </div>
+                                        <div>
+                                            <label class="block text-gray-400 text-xs mb-1">Humidity (%)</label>
+                                            <input type="number" id="weatherHumidity" placeholder="Auto-detect" class="w-full bg-gray-800 border border-gray-600 rounded p-2 text-sm">
+                                        </div>
+                                        <div>
+                                            <label class="block text-gray-400 text-xs mb-1">Rainfall (mm)</label>
+                                            <input type="number" id="weatherRainfall" placeholder="Auto-detect" class="w-full bg-gray-800 border border-gray-600 rounded p-2 text-sm">
+                                        </div>
+                                        <div class="text-xs text-gray-500 mt-2">
+                                            <i class="fas fa-info-circle mr-1"></i>
+                                            Leave empty for auto-detection
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Analysis Controls -->
+                                <div class="glass-morphism rounded-lg p-4">
+                                    <h4 class="font-semibold text-green-400 mb-3 flex items-center">
+                                        <i class="fas fa-cogs mr-2"></i>
+                                        Analysis Options
+                                    </h4>
+                                    <div class="space-y-3">
+                                        <div>
+                                            <label class="block text-gray-400 text-xs mb-2">Include Analysis</label>
+                                            <div class="space-y-2">
+                                                <label class="flex items-center">
+                                                    <input type="checkbox" id="includeFertilizer" checked class="mr-2">
+                                                    <span class="text-sm">Fertilizer Recommendations</span>
+                                                </label>
+                                                <label class="flex items-center">
+                                                    <input type="checkbox" id="includeIrrigation" checked class="mr-2">
+                                                    <span class="text-sm">Irrigation Schedule</span>
+                                                </label>
+                                                <label class="flex items-center">
+                                                    <input type="checkbox" id="includePestRisk" checked class="mr-2">
+                                                    <span class="text-sm">Pest Risk Assessment</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Large Analysis Button -->
+                                        <div class="mt-6">
+                                            <button id="completeAnalysisBtn" onclick="performCompleteAnalysis()" 
+                                                    class="w-full bg-gradient-to-r from-green-500 to-blue-500 text-white py-4 rounded-lg font-bold text-lg hover:from-green-600 hover:to-blue-600 transition duration-300 shadow-lg">
+                                                <i class="fas fa-search mr-3"></i>
+                                                Complete Analysis
+                                            </button>
+                                            <p class="text-gray-400 text-xs mt-2 text-center">Analyze crop health, soil, weather, pests & recommendations</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Analysis Results -->
+                        <div id="analysisResults" class="hidden space-y-6">
+                            <!-- Health Overview Cards -->
+                            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                                <!-- Crop Health Card -->
+                                <div class="glass-morphism rounded-lg p-6 text-center">
+                                    <div class="flex justify-center mb-3">
+                                        <div class="w-16 h-16 rounded-full bg-green-500 flex items-center justify-center">
+                                            <i class="fas fa-leaf text-white text-xl"></i>
+                                        </div>
+                                    </div>
+                                    <div class="text-2xl font-bold text-green-400" id="overallHealthStatus">Good</div>
+                                    <div class="text-sm text-gray-400 mb-2">Health Index: <span id="healthIndex">72/100</span></div>
+                                    <div class="text-xs text-gray-500" id="cropDetails">Cotton - Sowing | 1.0 ha</div>
+                                    <!-- Health Progress Bar -->
+                                    <div class="mt-3 w-full bg-gray-700 rounded-full h-2">
+                                        <div id="healthProgress" class="bg-green-500 h-2 rounded-full" style="width: 72%"></div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Soil Health Card -->
+                                <div class="glass-morphism rounded-lg p-6 text-center">
+                                    <div class="flex justify-center mb-3">
+                                        <div class="w-16 h-16 rounded-full bg-blue-500 flex items-center justify-center">
+                                            <i class="fas fa-seedling text-white text-xl"></i>
+                                        </div>
+                                    </div>
+                                    <div class="text-2xl font-bold text-blue-400" id="soilScore">85/100</div>
+                                    <div class="text-sm text-gray-400 mb-2">Good</div>
+                                    <div class="text-xs text-gray-500" id="soilDetails">pH: 6.8 | Moisture: 45%</div>
+                                    <!-- Soil Progress Bar -->
+                                    <div class="mt-3 w-full bg-gray-700 rounded-full h-2">
+                                        <div id="soilProgress" class="bg-blue-500 h-2 rounded-full" style="width: 85%"></div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Weather Card -->
+                                <div class="glass-morphism rounded-lg p-6 text-center">
+                                    <div class="flex justify-center mb-3">
+                                        <div class="w-16 h-16 rounded-full bg-yellow-500 flex items-center justify-center">
+                                            <i class="fas fa-thermometer-half text-white text-xl"></i>
+                                        </div>
+                                    </div>
+                                    <div class="text-2xl font-bold text-yellow-400" id="currentTemp">36.5°C</div>
+                                    <div class="text-sm text-gray-400 mb-2" id="weatherStatus">Hot</div>
+                                    <div class="text-xs text-gray-500" id="weatherDetails">Humidity: 52% | Rain: 0.2mm</div>
+                                </div>
+                                
+                                <!-- Pest Risk Card -->
+                                <div class="glass-morphism rounded-lg p-6 text-center">
+                                    <div class="flex justify-center mb-3">
+                                        <div class="w-16 h-16 rounded-full bg-orange-500 flex items-center justify-center">
+                                            <i class="fas fa-bug text-white text-xl"></i>
+                                        </div>
+                                    </div>
+                                    <div class="text-2xl font-bold text-orange-400" id="pestRiskPercentage">70%</div>
+                                    <div class="text-sm text-gray-400 mb-2" id="pestRiskLevel">Medium Risk</div>
+                                    <div class="text-xs text-gray-500" id="mainPest">Pink Bollworm</div>
+                                </div>
+                            </div>
+                            
+                            <!-- Plant Health Graph -->
+                            <div class="glass-morphism rounded-lg p-6">
+                                <div class="flex items-center justify-between mb-2">
+                                    <h3 class="text-lg font-bold text-green-400 flex items-center">
+                                        <i class="fas fa-chart-line mr-3"></i>
+                                        Plant Health Trend
+                                    </h3>
+                                    <div class="flex items-center space-x-2 text-xs">
+                                        <div class="bg-gray-800 rounded-lg p-1">
+                                            <button id="btnHealth7" class="px-2 py-1 rounded bg-green-600 text-white">7D</button>
+                                            <button id="btnHealth30" class="px-2 py-1 rounded text-gray-200 hover:bg-gray-700">30D</button>
+                                        </div>
+                                        <label class="flex items-center bg-gray-800 rounded px-2 py-1">
+                                            <input id="chkSmooth" type="checkbox" class="mr-1" checked>
+                                            Smooth
+                                        </label>
+                                        <button id="btnDownloadHealth" class="px-2 py-1 bg-gray-800 rounded hover:bg-gray-700">
+                                            <i class="fas fa-download"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div id="plantHealthChart" class="h-72"></div>
+                            </div>
+                            
+                            <!-- Fertilizer Recommendations -->
+                            <div id="fertilizerSection" class="glass-morphism rounded-lg p-6">
+                                <h3 class="text-lg font-bold text-green-400 mb-4 flex items-center">
+                                    <i class="fas fa-seedling mr-3"></i>
+                                    Fertilizer Recommendations & Cost Analysis
+                                </h3>
+                                <div id="fertilizerContent">
+                                    <!-- This will be populated with detailed fertilizer data -->
+                                </div>
+                            </div>
+                            
+                            <!-- Irrigation Recommendations -->
+                            <div id="irrigationSection" class="glass-morphism rounded-lg p-6">
+                                <h3 class="text-lg font-bold text-blue-400 mb-4 flex items-center">
+                                    <i class="fas fa-tint mr-3"></i>
+                                    Irrigation Schedule & Water Management
+                                </h3>
+                                <div id="irrigationContent">
+                                    <!-- This will be populated with detailed irrigation data -->
+                                </div>
+                            </div>
+                            
+                            <!-- Disease Analysis Chart -->
+                            <div class="glass-morphism rounded-lg p-6">
+                                <h3 class="text-lg font-bold text-red-400 mb-4">Environmental-Adjusted Disease Probabilities</h3>
+                                <div id="diseaseChart" class="h-64"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Health Trends Tab -->
+                <div id="health-trends" class="tab-content hidden">
+                    <div class="space-y-6">
+                        <!-- Soil and Crop Health Trends -->
+                        <div class="glass-morphism rounded-2xl p-6">
+                            <h2 class="text-xl font-bold text-green-400 mb-6 flex items-center">
+                                <i class="fas fa-chart-line mr-3"></i>
+                                Health Trends (Last 30 Days)
+                            </h2>
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                <div>
+                                    <h3 class="font-semibold mb-4">Soil & Crop Health</h3>
+                                    <div id="healthTrendChart" class="health-graph"></div>
+                                </div>
+                                <div>
+                                    <h3 class="font-semibold mb-4">NPK Levels Trend</h3>
+                                    <div id="npkTrendChart" class="health-graph"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- pH and Moisture Trends -->
+                        <div class="glass-morphism rounded-2xl p-6">
+                            <h3 class="text-lg font-bold text-blue-400 mb-4">Soil pH and Moisture Trends</h3>
+                            <div id="phMoistureTrendChart" class="trend-graph"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Fertilizer Tab -->
+                <div id="fertilizer" class="tab-content hidden">
+                    <div class="space-y-6">
+                        <!-- Fertilizer Recommendations -->
+                        <div class="glass-morphism rounded-2xl p-6">
+                            <h2 class="text-xl font-bold text-green-400 mb-6 flex items-center">
+                                <i class="fas fa-seedling mr-3"></i>
+                                Fertilizer Recommendations & Cost Analysis
+                            </h2>
+                            
+                            <!-- Fertilizer Options -->
+                            <div id="fertilizerOptions" class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                                <!-- Options will be loaded here dynamically -->
+                            </div>
+                            
+                            <!-- Selected Plan Details -->
+                            <div id="selectedPlanDetails" class="glass-morphism rounded-lg p-6">
+                                <h3 class="text-lg font-bold mb-4">Selected Plan Details</h3>
+                                <div id="planDetailsContent">
+                                    Select a fertilizer option to see detailed information
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Pest Risk Tab -->
+                <div id="pest-risk" class="tab-content hidden">
+                    <div class="space-y-6">
+                        <!-- 7-Day Pest Risk Forecast -->
+                        <div class="glass-morphism rounded-2xl p-6">
+                            <h2 class="text-xl font-bold text-red-400 mb-6 flex items-center">
+                                <i class="fas fa-bug mr-3"></i>
+                                7-Day Pest Risk Forecast
+                            </h2>
+                            <!-- Main Risk Gauge -->
+                            <div id="pestForecastChart" class="h-80 mb-6"></div>
+                            
+                            <!-- Detailed Trend Line (Optional) -->
+                            <div id="pestTrendLine" class="h-64"></div>
+                        </div>
+                        
+                        <!-- Environmental-Adjusted Disease Probabilities -->
+                        <div class="glass-morphism rounded-2xl p-6">
+                            <h3 class="text-lg font-bold text-red-400 mb-4">Environmental-Adjusted Disease Probabilities</h3>
+                            <div id="diseaseProbChart" class="h-64"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Zone Mapping Tab -->
+                <div id="zone-mapping" class="tab-content hidden">
+                    <div class="space-y-6">
+                        <!-- Interactive Map -->
+                        <div class="glass-morphism rounded-2xl p-6">
+                            <h2 class="text-xl font-bold text-purple-400 mb-6 flex items-center">
+                                <i class="fas fa-map mr-3"></i>
+                                Maharashtra Agricultural Risk Map
+                            </h2>
+                            
+                            <!-- Google Map Container -->
+                            <div id="map" class="w-full h-96 rounded-lg bg-gray-800 mb-6"></div>
+                            
+                            <!-- Map Controls -->
+                            <div class="flex justify-between items-center mb-4">
+                                <div class="flex space-x-2">
+                                    <button onclick="toggleMapLayer('risk')" class="px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700">
+                                        <i class="fas fa-exclamation-triangle mr-1"></i>
+                                        Risk Zones
+                                    </button>
+                                    <button onclick="toggleMapLayer('weather')" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700">
+                                        <i class="fas fa-cloud mr-1"></i>
+                                        Weather Layer
+                                    </button>
+                                    <button onclick="toggleMapLayer('soil')" class="px-4 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700">
+                                        <i class="fas fa-seedling mr-1"></i>
+                                        Soil Health
+                                    </button>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-gray-400 text-sm">Map View:</span>
+                                    <select id="mapViewSelect" onchange="changeMapType()" class="bg-gray-800 border border-gray-600 rounded px-2 py-1 text-sm">
+                                        <option value="hybrid">Satellite</option>
+                                        <option value="roadmap">Road Map</option>
+                                        <option value="terrain">Terrain</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Zone-wise Risk Summary -->
+                        <div class="glass-morphism rounded-2xl p-6">
+                            <h3 class="text-xl font-bold text-purple-400 mb-6">Zone-wise Risk Summary</h3>
+                            <div id="zoneRiskGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                <!-- Zone risk cards will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Dashboard Tab -->
+                <div id="dashboard" class="tab-content hidden">
+                    <!-- Unified Farm Management Dashboard -->
+                    <div class="glass-morphism rounded-2xl p-6 mb-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <h2 class="text-2xl font-bold text-green-400 flex items-center">
+                                <i class="fas fa-tractor mr-3"></i>
+                                Unified Farm Management Dashboard
+                                <i class="fas fa-link ml-2 text-sm"></i>
+                            </h2>
+                            <div class="text-gray-400 text-sm">
+                                Last Updated: <span id="lastUpdated">Just now</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Today's Farm Status Overview -->
+                        <div class="mb-8">
+                            <div class="flex items-center mb-4">
+                                <i class="fas fa-chart-bar text-blue-400 mr-3"></i>
+                                <h3 class="text-xl font-bold">Today's Farm Status Overview</h3>
+                            </div>
+                            
+                            <!-- Status Cards matching reference design -->
+                            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                                <!-- Crop Health Card -->
+                                <div class="bg-gradient-to-br from-green-100 to-green-50 text-gray-800 rounded-xl p-6 relative overflow-hidden">
+                                    <div class="absolute top-4 left-4">
+                                        <div class="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
+                                            <i class="fas fa-check text-white text-sm"></i>
+                                        </div>
+                                    </div>
+                                    <div class="pt-8">
+                                        <div class="text-sm text-green-600 font-medium mb-1">Crop Health</div>
+                                        <div class="text-3xl font-bold text-green-700 mb-2" id="dashCropHealth">Good</div>
+                                        <div class="text-sm text-green-600 mb-1">Health Index: <span id="dashHealthIndex">72/100</span></div>
+                                        <div class="text-xs text-green-500" id="dashCropType">Cotton - Sowing | 1.0 ha</div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Soil Health Card -->
+                                <div class="bg-gradient-to-br from-blue-100 to-blue-50 text-gray-800 rounded-xl p-6 relative overflow-hidden">
+                                    <div class="absolute top-4 left-4">
+                                        <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                                            <i class="fas fa-circle text-white text-sm"></i>
+                                        </div>
+                                    </div>
+                                    <div class="pt-8">
+                                        <div class="text-sm text-blue-600 font-medium mb-1">Soil Health</div>
+                                        <div class="text-3xl font-bold text-blue-700 mb-2" id="dashSoilHealth">85/100</div>
+                                        <div class="text-sm text-blue-600 mb-1">Good</div>
+                                        <div class="text-xs text-blue-500" id="dashSoilDetails">pH: 6.8 | Moisture: 45%</div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Weather Card -->
+                                <div class="bg-gradient-to-br from-yellow-100 to-yellow-50 text-gray-800 rounded-xl p-6 relative overflow-hidden">
+                                    <div class="absolute top-4 left-4">
+                                        <div class="w-8 h-8 bg-yellow-600 rounded-lg flex items-center justify-center">
+                                            <i class="fas fa-thermometer-half text-white text-sm"></i>
+                                        </div>
+                                    </div>
+                                    <div class="pt-8">
+                                        <div class="text-sm text-yellow-600 font-medium mb-1">Weather</div>
+                                        <div class="text-3xl font-bold text-yellow-700 mb-2" id="dashWeatherTemp">36.5°C</div>
+                                        <div class="text-sm text-yellow-600 mb-1" id="dashWeatherStatus">Hot</div>
+                                        <div class="text-xs text-yellow-500" id="dashWeatherDetails">Humidity: 52% | Rain: 0.2mm</div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Pest Risk Card -->
+                                <div class="bg-gradient-to-br from-orange-100 to-orange-50 text-gray-800 rounded-xl p-6 relative overflow-hidden">
+                                    <div class="absolute top-4 left-4">
+                                        <div class="w-8 h-8 bg-orange-600 rounded-lg flex items-center justify-center">
+                                            <i class="fas fa-circle text-white text-sm"></i>
+                                        </div>
+                                    </div>
+                                    <div class="pt-8">
+                                        <div class="text-sm text-orange-600 font-medium mb-1">Pest Risk</div>
+                                        <div class="text-3xl font-bold text-orange-700 mb-2" id="dashPestRisk">70%</div>
+                                        <div class="text-sm text-orange-600 mb-1" id="dashPestLevel">Medium Risk</div>
+                                        <div class="text-xs text-orange-500" id="dashMainPest">Pink Bollworm</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+    
+    <!-- Loading Modal -->
+    <div id="loadingModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+        <div class="glass-morphism rounded-2xl p-8 text-center">
+            <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-green-400 mx-auto mb-4"></div>
+            <h3 class="text-xl font-semibold mb-2">Analyzing Your Data...</h3>
+            <p class="text-gray-400">Please wait while we process the information</p>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentAnalysisData = null;
+        let map = null;
+        let mapMarkers = [];
+        
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            calculateNDVI();
+            updateHealthTrends();
+            updatePestTrends();
+            updateFertilizerRecommendations();
+            setupEventListeners();
+        });
+        
+        // Setup event listeners
+        function setupEventListeners() {
+            // Image upload
+            document.getElementById('browseBtn').addEventListener('click', () => {
+                document.getElementById('imageInput').click();
+            });
+            
+            document.getElementById('imageInput').addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const preview = document.getElementById('imagePreview');
+                        const img = document.getElementById('previewImg');
+                        img.src = e.target.result;
+                        preview.classList.remove('hidden');
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+            
+            // Soil test file upload
+            document.getElementById('soilTestFile').addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                const btn = document.getElementById('analyzeSoilBtn');
+                if (file) {
+                    btn.classList.remove('opacity-50');
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-search mr-2"></i>Analyze ' + file.name;
+                }
+            });
+            
+            // Update last updated time
+            setInterval(() => {
+                document.getElementById('lastUpdated').textContent = new Date().toLocaleTimeString();
+            }, 60000);
+        }
+        
+        // Tab Management
+        function showTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.add('hidden');
+            });
+            
+            // Remove active class from all tab buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('tab-active');
+                btn.classList.add('bg-gray-700', 'text-gray-300');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName).classList.remove('hidden');
+            
+            // Add active class to clicked button
+            event.target.closest('.tab-btn').classList.add('tab-active');
+            event.target.closest('.tab-btn').classList.remove('bg-gray-700', 'text-gray-300');
+            
+            // Load tab-specific content
+            if (tabName === 'health-trends') {
+                updateHealthTrends();
+            } else if (tabName === 'fertilizer') {
+                updateFertilizerRecommendations();
+            } else if (tabName === 'pest-risk') {
+                updatePestTrends();
+                loadDiseaseProb();
+            } else if (tabName === 'zone-mapping') {
+                loadZoneMapping();
+            }
+        }
+        
+        // NDVI Calculation
+        function calculateNDVI() {
+            const nir = parseFloat(document.getElementById('nirValue').value);
+            const red = parseFloat(document.getElementById('redValue').value);
+            const ndvi = (nir - red) / (nir + red);
+            document.getElementById('ndviIndex').textContent = ndvi.toFixed(3);
+        }
+        
+        function adjustNDVI(type, value) {
+            const input = document.getElementById(type + 'Value');
+            const newValue = parseFloat(input.value) + value;
+            input.value = Math.max(0, Math.min(1, newValue)).toFixed(2);
+            calculateNDVI();
+        }
+        
+        // Farm area adjustment
+        function adjustFarmArea(value) {
+            const input = document.getElementById('farmArea');
+            const newValue = parseFloat(input.value) + value;
+            input.value = Math.max(0.1, newValue).toFixed(1);
+        }
+        
+        // Manual input toggle
+        function toggleManualInput() {
+            const manualInput = document.getElementById('manualSoilInput');
+            manualInput.classList.toggle('hidden');
+        }
+        
+        // Analyze soil test
+        function analyzeSoilTest() {
+            const fileInput = document.getElementById('soilTestFile');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('Please select a soil test file first');
+                return;
+            }
+            
+            // Show loading
+            document.getElementById('loadingModal').classList.remove('hidden');
+            
+            // Create form data
+            const formData = new FormData();
+            formData.append('soil_test_file', file);
+            
+            // Send to server
+            fetch('/api/soil_test_upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('loadingModal').classList.add('hidden');
+                if (data.status === 'success') {
+                    displaySoilTestResults(data);
+                } else {
+                    alert('Error analyzing soil test: ' + data.message);
+                }
+            })
+            .catch(error => {
+                document.getElementById('loadingModal').classList.add('hidden');
+                console.error('Error:', error);
+                alert('Error uploading file');
+            });
+        }
+        
+        function displaySoilTestResults(data) {
+            // Update soil health card
+            document.getElementById('soilScore').textContent = data.health_score + '/100';
+            document.getElementById('soilDetails').textContent = `pH: ${data.soil_test_results.ph} | N:${data.soil_test_results.nitrogen} P:${data.soil_test_results.phosphorus} K:${data.soil_test_results.potassium}`;
+            document.getElementById('soilProgress').style.width = data.health_score + '%';
+            
+            // Show recommendations
+            alert('Soil Analysis Complete!\\n\\n' + data.recommendations.join('\\n'));
+        }
+        
+        // Update health trends
+        function updateHealthTrends() {
+            const district = document.getElementById('districtSelect').value;
+            
+            fetch(`/api/health_trends/${district}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        plotHealthTrends(data);
+                        plotNPKTrends(data);
+                        plotPhMoistureTrends(data);
+                    }
+                })
+                .catch(error => console.error('Error loading health trends:', error));
+        }
+        
+        function plotHealthTrends(data) {
+            // Create simple color-coded health indicators
+            const getHealthColor = (value) => {
+                if (value >= 80) return '#22c55e'; // Good Green
+                if (value >= 60) return '#eab308'; // Warning Yellow  
+                return '#ef4444'; // Bad Red
+            };
+            
+            const getHealthLabel = (value) => {
+                if (value >= 80) return 'फसल अच्छी है (Good Crop)';
+                if (value >= 60) return 'सावधान रहें (Be Careful)';  
+                return 'तुरंत कार्रवाई करें (Take Action)';
+            };
+            
+            const trace1 = {
+                x: data.dates,
+                y: data.soil_health,
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: '🌱 मिट्टी की सेहत (Soil Health)',
+                line: { color: data.soil_health.map(v => getHealthColor(v))[data.soil_health.length-1], width: 5 },
+                marker: { 
+                    size: 12, 
+                    color: data.soil_health.map(v => getHealthColor(v)),
+                    line: { width: 2, color: 'white' }
+                },
+                hovertemplate: '<b>%{fullData.name}</b><br>' +
+                               'Date: %{x}<br>' +
+                               'Health: %{y}%<br>' +
+                               'Status: ' + data.soil_health.map(v => getHealthLabel(v)) + '<br>' +
+                               '<extra></extra>'
+            };
+            
+            const trace2 = {
+                x: data.dates,
+                y: data.crop_health,
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: '🌾 फसल की सेहत (Crop Health)',
+                line: { color: data.crop_health.map(v => getHealthColor(v))[data.crop_health.length-1], width: 5 },
+                marker: { 
+                    size: 12, 
+                    color: data.crop_health.map(v => getHealthColor(v)),
+                    line: { width: 2, color: 'white' }
+                },
+                hovertemplate: '<b>%{fullData.name}</b><br>' +
+                               'Date: %{x}<br>' +
+                               'Health: %{y}%<br>' +
+                               'Status: ' + data.crop_health.map(v => getHealthLabel(v)) + '<br>' +
+                               '<extra></extra>'
+            };
+            
+            const layout = {
+                title: { 
+                    text: '📈 फसल और मिट्टी की सेहत (Crop & Soil Health)', 
+                    font: { color: '#f3f4f6', size: 18 }
+                },
+                xaxis: { 
+                    title: { text: 'दिनांक (Date)', font: { size: 14 } }, 
+                    color: '#9ca3af',
+                    tickfont: { size: 12 }
+                },
+                yaxis: { 
+                    title: { text: 'सेहत स्कोर (Health Score)', font: { size: 14 } }, 
+                    color: '#9ca3af', 
+                    range: [0, 100],
+                    tickfont: { size: 12 }
+                },
+                plot_bgcolor: 'rgba(0,0,0,0)',
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                font: { color: '#f3f4f6', size: 12 },
+                legend: { 
+                    orientation: 'h', 
+                    y: -0.15,
+                    font: { size: 14 }
+                },
+                // Add color band backgrounds
+                shapes: [
+                    {
+                        type: 'rect',
+                        xref: 'paper',
+                        yref: 'y',
+                        x0: 0, x1: 1, y0: 80, y1: 100,
+                        fillcolor: 'rgba(34, 197, 94, 0.1)',
+                        line: { width: 0 },
+                        layer: 'below'
+                    },
+                    {
+                        type: 'rect',
+                        xref: 'paper',
+                        yref: 'y',
+                        x0: 0, x1: 1, y0: 60, y1: 80,
+                        fillcolor: 'rgba(234, 179, 8, 0.1)',
+                        line: { width: 0 },
+                        layer: 'below'
+                    },
+                    {
+                        type: 'rect',
+                        xref: 'paper',
+                        yref: 'y',
+                        x0: 0, x1: 1, y0: 0, y1: 60,
+                        fillcolor: 'rgba(239, 68, 68, 0.1)',
+                        line: { width: 0 },
+                        layer: 'below'
+                    }
+                ],
+                annotations: [
+                    {
+                        x: 0.98, y: 90,
+                        xref: 'paper', yref: 'y',
+                        text: '✅ अच्छा (Good)',
+                        showarrow: false,
+                        font: { size: 12, color: '#22c55e' },
+                        bgcolor: 'rgba(34, 197, 94, 0.2)',
+                        bordercolor: '#22c55e',
+                        borderwidth: 1
+                    },
+                    {
+                        x: 0.98, y: 70,
+                        xref: 'paper', yref: 'y',
+                        text: '⚠️ सावधान (Careful)',
+                        showarrow: false,
+                        font: { size: 12, color: '#eab308' },
+                        bgcolor: 'rgba(234, 179, 8, 0.2)',
+                        bordercolor: '#eab308',
+                        borderwidth: 1
+                    },
+                    {
+                        x: 0.98, y: 30,
+                        xref: 'paper', yref: 'y',
+                        text: '❌ कार्रवाई करें (Take Action)',
+                        showarrow: false,
+                        font: { size: 12, color: '#ef4444' },
+                        bgcolor: 'rgba(239, 68, 68, 0.2)',
+                        bordercolor: '#ef4444',
+                        borderwidth: 1
+                    }
+                ]
+            };
+            
+            Plotly.newPlot('healthTrendChart', [trace1, trace2], layout, { responsive: true });
+        }
+        
+        function plotNPKTrends(data) {
+            const trace1 = {
+                x: data.dates,
+                y: data.npk_values.nitrogen,
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Nitrogen',
+                line: { color: '#f59e0b' }
+            };
+            
+            const trace2 = {
+                x: data.dates,
+                y: data.npk_values.phosphorus,
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Phosphorus',
+                line: { color: '#ef4444' }
+            };
+            
+            const trace3 = {
+                x: data.dates,
+                y: data.npk_values.potassium,
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Potassium',
+                line: { color: '#8b5cf6' }
+            };
+            
+            const layout = {
+                title: { text: 'NPK Levels Trend', font: { color: '#f3f4f6' } },
+                xaxis: { title: 'Date', color: '#9ca3af' },
+                yaxis: { title: 'Relative Level (%)', color: '#9ca3af', range: [0, 100] },
+                plot_bgcolor: 'rgba(0,0,0,0)',
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                font: { color: '#f3f4f6' },
+                legend: { orientation: 'h', y: -0.2 }
+            };
+            
+            Plotly.newPlot('npkTrendChart', [trace1, trace2, trace3], layout, { responsive: true });
+        }
+        
+        function plotPhMoistureTrends(data) {
+            const trace1 = {
+                x: data.dates,
+                y: data.soil_ph,
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Soil pH',
+                yaxis: 'y',
+                line: { color: '#06b6d4' }
+            };
+            
+            const layout = {
+                title: { text: 'Soil pH Trend', font: { color: '#f3f4f6' } },
+                xaxis: { title: 'Date', color: '#9ca3af' },
+                yaxis: { title: 'pH Level', color: '#9ca3af', range: [5, 8] },
+                plot_bgcolor: 'rgba(0,0,0,0)',
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                font: { color: '#f3f4f6' },
+                legend: { orientation: 'h', y: -0.2 }
+            };
+            
+            Plotly.newPlot('phMoistureTrendChart', [trace1], layout, { responsive: true });
+        }
+        
+        // Update fertilizer recommendations
+        function updateFertilizerRecommendations() {
+            const cropType = document.getElementById('cropSelect').value;
+            
+            fetch(`/api/fertilizer_recommendations/${cropType}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        displayFertilizerOptions(data.options);
+                    }
+                })
+                .catch(error => console.error('Error loading fertilizer recommendations:', error));
+        }
+        
+        function displayFertilizerOptions(options) {
+            const container = document.getElementById('fertilizerOptions');
+            container.innerHTML = '';
+            
+            Object.keys(options).forEach(key => {
+                const option = options[key];
+                const optionDiv = document.createElement('div');
+                optionDiv.className = 'fertilizer-option glass-morphism rounded-lg p-6 border border-gray-600';
+                optionDiv.onclick = () => selectFertilizerOption(key, option);
+                
+                const costPerHa = option.cost_per_hectare;
+                const totalCost = option.total_cost;
+                
+                optionDiv.innerHTML = `
+                    <div class="text-center mb-4">
+                        <h3 class="text-lg font-bold text-green-400 mb-2">${option.name}</h3>
+                        <p class="text-sm text-gray-400 mb-4">${option.description}</p>
+                        <div class="text-3xl font-bold text-yellow-400 mb-2">₹${totalCost.toLocaleString()}</div>
+                        <div class="text-sm text-gray-300">₹${costPerHa.toLocaleString()} per hectare</div>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="text-sm font-semibold text-blue-400 mb-2">Benefits:</div>
+                        ${option.benefits.map(benefit => `<div class="text-xs text-gray-300 flex items-center"><i class="fas fa-check text-green-400 mr-2"></i>${benefit}</div>`).join('')}
+                    </div>
+                    <button class="w-full mt-4 bg-green-600 text-white py-2 rounded-lg hover:bg-green-700">
+                        Select This Plan
+                    </button>
+                `;
+                
+                container.appendChild(optionDiv);
+            });
+        }
+        
+        function selectFertilizerOption(key, option) {
+            // Remove previous selection
+            document.querySelectorAll('.fertilizer-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            
+            // Add selection to clicked option
+            event.currentTarget.classList.add('selected');
+            
+            // Display detailed information
+            const detailsContainer = document.getElementById('planDetailsContent');
+            let detailsHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h4 class="font-bold text-green-400 mb-3">Fertilizer Plan</h4>
+                        <div class="space-y-3">
+            `;
+            
+            option.fertilizer_plan.forEach(item => {
+                detailsHTML += `
+                    <div class="bg-gray-800 rounded-lg p-4">
+                        <div class="flex justify-between items-center mb-2">
+                            <div class="font-semibold">${item.name}</div>
+                            <div class="text-lg font-bold text-yellow-400">₹${item.total_cost}</div>
+                        </div>
+                        <div class="text-sm text-gray-400 mb-2">${item.quantity} ${item.unit} @ ₹${item.cost_per_kg}/${item.unit}</div>
+                        <div class="text-xs text-gray-500">${item.application}</div>
+                    </div>
+                `;
+            });
+            
+            detailsHTML += `
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-blue-400 mb-3">Cost Breakdown</h4>
+                        <div class="bg-gray-800 rounded-lg p-4">
+                            <div class="space-y-2">
+                                <div class="flex justify-between">
+                                    <span>Total Materials Cost:</span>
+                                    <span class="font-bold">₹${option.total_cost}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Cost per Hectare:</span>
+                                    <span class="font-bold">₹${option.cost_per_hectare}</span>
+                                </div>
+                                <div class="border-t border-gray-600 pt-2 mt-2">
+                                    <div class="flex justify-between text-lg">
+                                        <span class="font-bold">Total Investment:</span>
+                                        <span class="font-bold text-yellow-400">₹${option.total_cost}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <button onclick="proceedWithPlan()" class="w-full bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700">
+                                <i class="fas fa-shopping-cart mr-2"></i>
+                                Proceed with This Plan
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            detailsContainer.innerHTML = detailsHTML;
+        }
+        
+        function proceedWithPlan() {
+            alert('Plan selected! In a real application, this would proceed to checkout or supplier contact.');
+        }
+        
+        // Update pest trends
+        function updatePestTrends() {
+            const cropType = document.getElementById('cropSelect').value;
+            
+            fetch(`/api/pest_trends/${cropType}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        plotPestTrends(data);
+                    }
+                })
+                .catch(error => console.error('Error loading pest trends:', error));
+        }
+        
+        function plotPestTrends(data) {
+            // Calculate overall pest risk percentage
+            const allRisks = Object.values(data.pest_risks).flat();
+            const overallRiskPercent = Math.round(allRisks.reduce((a, b) => a + b, 0) / allRisks.length);
+            
+            // Create a big donut chart showing overall risk percentage
+            const riskColor = overallRiskPercent >= 70 ? '#ef4444' : overallRiskPercent >= 40 ? '#f59e0b' : '#22c55e';
+            const riskStatus = overallRiskPercent >= 70 ? 'खतरा (High Risk)' : overallRiskPercent >= 40 ? 'सावधान (Medium Risk)' : 'सुरक्षित (Safe)';
+            const riskIcon = overallRiskPercent >= 70 ? '🚨' : overallRiskPercent >= 40 ? '⚠️' : '✅';
+            
+            // Create gauge chart
+            const gaugeTrace = {
+                type: "indicator",
+                mode: "gauge+number",
+                value: overallRiskPercent,
+                title: { 
+                    text: `${riskIcon} कीट जोखिम (Pest Risk)<br><span style="font-size:16px">${riskStatus}</span>`,
+                    font: { size: 24, color: '#f3f4f6' }
+                },
+                number: {
+                    font: { size: 48, color: riskColor },
+                    suffix: '%'
+                },
+                gauge: {
+                    axis: { range: [null, 100], tickwidth: 2, tickcolor: '#9ca3af', tickfont: { size: 14 } },
+                    bar: { color: riskColor, thickness: 0.8 },
+                    bgcolor: "rgba(255,255,255,0.1)",
+                    borderwidth: 3,
+                    bordercolor: '#374151',
+                    steps: [
+                        { range: [0, 40], color: 'rgba(34, 197, 94, 0.3)' },   // Safe zone
+                        { range: [40, 70], color: 'rgba(234, 179, 8, 0.3)' },  // Warning zone
+                        { range: [70, 100], color: 'rgba(239, 68, 68, 0.3)' }  // Danger zone
+                    ],
+                    threshold: {
+                        line: { color: "white", width: 4 },
+                        thickness: 0.75,
+                        value: overallRiskPercent
+                    }
+                }
+            };
+            
+            const gaugeLayout = {
+                height: 350,
+                plot_bgcolor: 'rgba(0,0,0,0)',
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                font: { color: '#f3f4f6' },
+                margin: { l: 20, r: 20, t: 60, b: 20 },
+                annotations: [
+                    {
+                        x: 0.15, y: 0.1,
+                        xref: 'paper', yref: 'paper',
+                        text: '✅ 0-40%<br>सुरक्षित<br>(Safe)',
+                        showarrow: false,
+                        font: { size: 12, color: '#22c55e' },
+                        bgcolor: 'rgba(34, 197, 94, 0.2)',
+                        bordercolor: '#22c55e',
+                        borderwidth: 1
+                    },
+                    {
+                        x: 0.5, y: 0.1,
+                        xref: 'paper', yref: 'paper',
+                        text: '⚠️ 40-70%<br>सावधान<br>(Careful)',
+                        showarrow: false,
+                        font: { size: 12, color: '#eab308' },
+                        bgcolor: 'rgba(234, 179, 8, 0.2)',
+                        bordercolor: '#eab308',
+                        borderwidth: 1
+                    },
+                    {
+                        x: 0.85, y: 0.1,
+                        xref: 'paper', yref: 'paper',
+                        text: '🚨 70-100%<br>खतरा<br>(High Risk)',
+                        showarrow: false,
+                        font: { size: 12, color: '#ef4444' },
+                        bgcolor: 'rgba(239, 68, 68, 0.2)',
+                        bordercolor: '#ef4444',
+                        borderwidth: 1
+                    }
+                ]
+            };
+            
+            // Create the main gauge chart
+            Plotly.newPlot('pestForecastChart', [gaugeTrace], gaugeLayout, { responsive: true });
+            
+            // Create a simple trend line below the gauge (if element exists)
+            if (document.getElementById('pestTrendLine')) {
+                const pestNames = Object.keys(data.pest_risks);
+                const mainPest = pestNames[0] || 'पत्ती कीट (Leaf Pests)';
+                const trendData = data.pest_risks[pestNames[0]] || [30, 35, 45, 50, 55, 48, 42];
+                
+                const trendTrace = {
+                    x: data.dates,
+                    y: trendData,
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    name: `${mainPest} जोखिम`,
+                    line: { color: riskColor, width: 6 },
+                    marker: { 
+                        size: 14, 
+                        color: trendData.map(v => v >= 70 ? '#ef4444' : v >= 40 ? '#f59e0b' : '#22c55e'),
+                        line: { width: 3, color: 'white' }
+                    },
+                    hovertemplate: '<b>%{fullData.name}</b><br>' +
+                                   'दिनांक: %{x}<br>' +
+                                   'जोखिम: %{y}%<br>' +
+                                   '<extra></extra>'
+                };
+                
+                const trendLayout = {
+                    title: { 
+                        text: `📊 7 दिन का कीट जोखिम रुझान (7-Day Pest Risk Trend)`, 
+                        font: { color: '#f3f4f6', size: 16 }
+                    },
+                    xaxis: { 
+                        title: { text: 'दिनांक (Date)', font: { size: 12 } }, 
+                        color: '#9ca3af',
+                        tickfont: { size: 11 }
+                    },
+                    yaxis: { 
+                        title: { text: 'जोखिम % (Risk %)', font: { size: 12 } }, 
+                        color: '#9ca3af', 
+                        range: [0, 100],
+                        tickfont: { size: 11 }
+                    },
+                    plot_bgcolor: 'rgba(0,0,0,0)',
+                    paper_bgcolor: 'rgba(0,0,0,0)',
+                    font: { color: '#f3f4f6', size: 11 },
+                    height: 250,
+                    margin: { l: 50, r: 20, t: 40, b: 40 },
+                    showlegend: false,
+                    // Add horizontal threshold lines
+                    shapes: [
+                        {
+                            type: 'line',
+                            x0: 0, x1: 1,
+                            y0: 70, y1: 70,
+                            xref: 'paper',
+                            yref: 'y',
+                            line: { color: '#ef4444', width: 2, dash: 'dash' }
+                        },
+                        {
+                            type: 'line',
+                            x0: 0, x1: 1,
+                            y0: 40, y1: 40,
+                            xref: 'paper',
+                            yref: 'y',
+                            line: { color: '#eab308', width: 2, dash: 'dash' }
+                        }
+                    ]
+                };
+                
+                Plotly.newPlot('pestTrendLine', [trendTrace], trendLayout, { responsive: true });
+            }
+        }
+        
+        // Theme detection utility that checks effective background at an element
+        function detectThemeIsDark(el) {
+            const parseRgb = (bg) => {
+                const m = bg && bg.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
+                if (!m) return [17,17,17];
+                return [parseInt(m[1],10), parseInt(m[2],10), parseInt(m[3],10)];
+            };
+            const luminance = (r,g,b) => {
+                const [R,G,B] = [r,g,b].map(v => {
+                    v = v/255; return v <= 0.03928 ? v/12.92 : Math.pow((v+0.055)/1.055, 2.4);
+                });
+                return 0.2126*R + 0.7152*G + 0.0722*B;
+            };
+            let node = el || document.body;
+            while (node) {
+                const style = window.getComputedStyle(node);
+                const bg = style.backgroundColor;
+                const [r,g,b] = parseRgb(bg);
+                const alphaMatch = bg && bg.match(/rgba\([^,]+,[^,]+,[^,]+,\s*([0-9.]+)\)/i);
+                const alpha = alphaMatch ? parseFloat(alphaMatch[1]) : 1;
+                if (alpha > 0.01 && (r !== 0 || g !== 0 || b !== 0)) {
+                    return luminance(r,g,b) < 0.5;
+                }
+                node = node.parentElement;
+            }
+            // Fallback to prefers-color-scheme
+            try { return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches; } catch (_) { return true; }
+        }
+
+        function loadDiseaseProb() {
+            try {
+                const containerId = 'diseaseProbChart';
+                const container = document.getElementById(containerId);
+                if (!container) return;
+
+                // Use provided global data if available; else fallback demo
+                const source = window.latestDiseaseProbabilities || null;
+                const diseases = source?.labels || ['Healthy', 'Bacterial_Blight', 'Yellow_Curl_Virus'];
+                const probabilities = source?.values || [70, 18, 12];
+
+                // Helper to prettify long/underscored labels for readability
+                const prettify = (raw) => {
+                    if (!raw) return '';
+                    const titled = raw.replace(/_/g, ' ').replace(/\s+/g, ' ').toLowerCase().replace(/(^|\s)\S/g, s => s.toUpperCase());
+                    // Insert line breaks for long labels
+                    return titled.length > 18 ? titled.replace(/(.{18})/g, '$1\n') : titled;
+                };
+
+                // Pair, sort desc, and compress tail to 'Other' for professionalism
+                const pairs = diseases.map((label, i) => ({ label, value: Number(probabilities[i] || 0) }));
+                pairs.sort((a, b) => b.value - a.value);
+                const top = pairs.slice(0, 5);
+                const tail = pairs.slice(5);
+                const otherValue = tail.reduce((s, p) => s + p.value, 0);
+                if (otherValue > 0.5) top.push({ label: 'Other', value: otherValue });
+                const yLabels = top.map(p => p.label);
+                const xValues = top.map(p => Math.max(0, Math.min(100, p.value)));
+                const displayLabels = yLabels.map(prettify);
+
+                // Theme-aware colors (dark UI here)
+                const isDark = detectThemeIsDark(container);
+                const textColor = '#000000';
+                const axisColor = '#000000';
+                const tickColor = '#000000';
+                const gridColor = isDark ? 'rgba(148,163,184,0.35)' : 'rgba(100,116,139,0.25)';
+                // Theme-aligned accessible palette and risk mapping
+                const palette = isDark
+                    ? ['#22c55e','#e11d48','#f59e0b','#0ea5e9','#8b5cf6','#14b8a6','#f43f5e']
+                    : ['#15803d','#b91c1c','#b45309','#0369a1','#6d28d9','#0f766e','#be185d'];
+                const low = isDark ? '#22c55e' : '#16a34a';
+                const mid = isDark ? '#f59e0b' : '#d97706';
+                const high = isDark ? '#ef4444' : '#dc2626';
+
+                // Build bars with distinct colors and readable labels
+                // Color each bar by risk threshold; keep 'Healthy' green
+                const barColors = xValues.map((v, i) => {
+                    if (/healthy/i.test(yLabels[i])) return low;
+                    if (v > 30) return high;
+                    if (v > 10) return mid;
+                    return low;
+                });
+
+                const trace = {
+                    x: xValues,
+                    y: displayLabels,
+                    type: 'bar',
+                    orientation: 'h',
+                    marker: {
+                        color: displayLabels.map((label, i) => /other/i.test(label) ? (isDark ? '#64748b' : '#334155') : barColors[i]),
+                        line: { color: isDark ? '#ffffff' : '#111827', width: 2 },
+                        opacity: 1.0,
+                        pattern: {
+                            shape: displayLabels.map(l => /other/i.test(l) ? '/' : ''),
+                            size: 6,
+                            solidity: 0.4
+                        }
+                    },
+                    text: xValues.map(v => `${v.toFixed(1)}%`),
+                    textposition: 'outside',
+                    insidetextanchor: 'end',
+                    textfont: { color: '#000000', size: 14, family: 'Inter, system-ui, sans-serif' },
+                    hovertemplate: '<b>%{y}</b><br>Confidence: <b>%{x:.1f}%</b><extra></extra>',
+                    cliponaxis: false,
+                    constraintext: 'both'
+                };
+
+                // Legend for risk colors (dummy invisible traces to show legend only)
+                const legendLow = { x: [null], y: [null], mode: 'markers', marker: { color: low, size: 12 }, name: 'Low (≤ 10%)', hoverinfo: 'skip', showlegend: true, type: 'scatter' };
+                const legendMid = { x: [null], y: [null], mode: 'markers', marker: { color: mid, size: 12 }, name: 'Medium (10–30%)', hoverinfo: 'skip', showlegend: true, type: 'scatter' };
+                const legendHigh = { x: [null], y: [null], mode: 'markers', marker: { color: high, size: 12 }, name: 'High (> 30%)', hoverinfo: 'skip', showlegend: true, type: 'scatter' };
+
+                const layout = {
+                    title: { text: 'Disease Detection Confidence Scores', font: { color: '#000000', size: 18 } },
+                    xaxis: { title: 'Probability (%)', color: '#000000', range: [0, 100], gridcolor: '#000000', zeroline: false, tickfont: { size: 14, color: '#000000' }, showticklabels: true },
+                    yaxis: { title: 'Condition', color: '#000000', automargin: true, tickfont: { size: 14, color: '#000000' }, ticklabeloverflow: 'allow', ticks: 'outside', tickpadding: 8, showticklabels: true },
+                    bargap: 0.25,
+                    margin: { t: 60, r: 40, b: 50, l: 220 },
+                    // White background for maximum text visibility
+                    plot_bgcolor: 'rgba(255,255,255,0.9)',
+                    paper_bgcolor: 'rgba(255,255,255,0.9)',
+                    font: { color: textColor }
+                };
+
+                // Improve hover and uniform text visibility
+                layout.hoverlabel = { bgcolor: isDark ? '#111827' : '#ffffff', bordercolor: isDark ? '#f8fafc' : '#111827', font: { color: textColor, size: 12 } };
+                layout.uniformtext = { mode: 'hide', minsize: 10 };
+
+                const config = { responsive: true, displayModeBar: false };
+                Plotly.newPlot(containerId, [trace, legendLow, legendMid, legendHigh], layout, config);
+            } catch (e) {
+                console.error('Disease probability chart error:', e);
+                const el = document.getElementById('diseaseProbChart');
+                if (el) el.innerHTML = '<div class="text-center text-gray-400 py-8">Unable to load Detailed Disease Probability Analysis</div>';
+            }
+        }
+        
+        // Enhanced Google Maps Integration
+        let heatmapLayer = null;
+        let currentMapLayer = 'risk';
+        
+        function initMap() {
+            // Maharashtra coordinates
+            const maharashtra = { lat: 19.7515, lng: 75.7139 };
+            
+            // Enhanced map options
+            const mapOptions = {
+                zoom: 7,
+                center: maharashtra,
+                mapTypeId: 'roadmap',
+                mapTypeControl: true,
+                mapTypeControlOptions: {
+                    style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
+                    position: google.maps.ControlPosition.BOTTOM_CENTER
+                },
+                zoomControl: true,
+                zoomControlOptions: {
+                    position: google.maps.ControlPosition.RIGHT_CENTER
+                },
+                scaleControl: true,
+                streetViewControl: false,
+                fullscreenControl: true,
+                styles: [
+                    {
+                        "featureType": "all",
+                        "elementType": "geometry",
+                        "stylers": [{"color": "#242f3e"}]
+                    },
+                    {
+                        "featureType": "all",
+                        "elementType": "labels.text.stroke",
+                        "stylers": [{"lightness": -80}]
+                    },
+                    {
+                        "featureType": "administrative",
+                        "elementType": "labels.text.fill",
+                        "stylers": [{"color": "#746855"}]
+                    },
+                    {
+                        "featureType": "water",
+                        "elementType": "geometry",
+                        "stylers": [{"color": "#17263c"}]
+                    }
+                ]
+            };
+            
+            map = new google.maps.Map(document.getElementById('map'), mapOptions);
+            
+            // Add enhanced district markers
+            addEnhancedDistrictMarkers();
+            
+            // Add map controls info panel
+            addMapInfoPanel();
+        }
+        
+        function addEnhancedDistrictMarkers() {
+            // All 36 districts of Maharashtra with agricultural data
+            const districts = [
+                // Western Maharashtra
+                { name: 'Pune', lat: 18.5204, lng: 73.8567, risk: 'Medium', riskScore: 65, crops: ['Sugarcane', 'Cotton', 'Wheat'], population: '9.4M', zone: 'Western' },
+                { name: 'Ahmednagar', lat: 19.0948, lng: 74.7480, risk: 'High', riskScore: 75, crops: ['Sugarcane', 'Cotton', 'Jowar'], population: '4.5M', zone: 'Western' },
+                { name: 'Nashik', lat: 19.9975, lng: 73.7898, risk: 'High', riskScore: 85, crops: ['Grapes', 'Onions', 'Cotton'], population: '6.1M', zone: 'Western' },
+                { name: 'Kolhapur', lat: 16.7050, lng: 74.2433, risk: 'Medium', riskScore: 55, crops: ['Sugarcane', 'Rice', 'Turmeric'], population: '3.9M', zone: 'Western' },
+                { name: 'Sangli', lat: 16.8544, lng: 74.5648, risk: 'Medium', riskScore: 58, crops: ['Sugarcane', 'Grapes', 'Turmeric'], population: '2.8M', zone: 'Western' },
+                { name: 'Satara', lat: 17.6805, lng: 74.0183, risk: 'Low', riskScore: 45, crops: ['Sugarcane', 'Rice', 'Strawberry'], population: '3.0M', zone: 'Western' },
+                { name: 'Solapur', lat: 17.6599, lng: 75.9064, risk: 'High', riskScore: 72, crops: ['Cotton', 'Jowar', 'Wheat'], population: '4.3M', zone: 'Western' },
+                
+                // Konkan (Coastal)
+                { name: 'Mumbai City', lat: 19.0760, lng: 72.8777, risk: 'Low', riskScore: 25, crops: ['Vegetables', 'Fruits'], population: '12.5M', zone: 'Konkan' },
+                { name: 'Mumbai Suburban', lat: 19.2183, lng: 72.9781, risk: 'Low', riskScore: 28, crops: ['Vegetables', 'Rice'], population: '9.3M', zone: 'Konkan' },
+                { name: 'Thane', lat: 19.2183, lng: 72.9781, risk: 'Medium', riskScore: 42, crops: ['Rice', 'Coconut', 'Vegetables'], population: '11.1M', zone: 'Konkan' },
+                { name: 'Raigad', lat: 18.5074, lng: 73.0219, risk: 'Medium', riskScore: 50, crops: ['Rice', 'Cashew', 'Mango'], population: '2.6M', zone: 'Konkan' },
+                { name: 'Ratnagiri', lat: 16.9902, lng: 73.3120, risk: 'Low', riskScore: 35, crops: ['Alphonso Mango', 'Cashew', 'Kokum'], population: '1.6M', zone: 'Konkan' },
+                { name: 'Sindhudurg', lat: 15.9993, lng: 73.7790, risk: 'Low', riskScore: 30, crops: ['Cashew', 'Coconut', 'Mango'], population: '0.85M', zone: 'Konkan' },
+                
+                // Vidarbha
+                { name: 'Nagpur', lat: 21.1458, lng: 79.0882, risk: 'Medium', riskScore: 60, crops: ['Cotton', 'Rice', 'Orange'], population: '4.6M', zone: 'Vidarbha' },
+                { name: 'Akola', lat: 20.7002, lng: 77.0082, risk: 'High', riskScore: 78, crops: ['Cotton', 'Jowar', 'Tur'], population: '1.8M', zone: 'Vidarbha' },
+                { name: 'Amravati', lat: 20.9319, lng: 77.7523, risk: 'High', riskScore: 82, crops: ['Cotton', 'Orange', 'Tur'], population: '2.9M', zone: 'Vidarbha' },
+                { name: 'Buldhana', lat: 20.5307, lng: 76.1873, risk: 'High', riskScore: 85, crops: ['Cotton', 'Jowar', 'Tur'], population: '2.6M', zone: 'Vidarbha' },
+                { name: 'Yavatmal', lat: 20.3897, lng: 78.1307, risk: 'High', riskScore: 88, crops: ['Cotton', 'Tur', 'Jowar'], population: '2.8M', zone: 'Vidarbha' },
+                { name: 'Washim', lat: 20.1020, lng: 77.1331, risk: 'High', riskScore: 80, crops: ['Cotton', 'Tur', 'Jowar'], population: '1.2M', zone: 'Vidarbha' },
+                { name: 'Wardha', lat: 20.7453, lng: 78.6022, risk: 'Medium', riskScore: 65, crops: ['Cotton', 'Rice', 'Wheat'], population: '1.3M', zone: 'Vidarbha' },
+                { name: 'Chandrapur', lat: 19.9615, lng: 79.2961, risk: 'Medium', riskScore: 62, crops: ['Rice', 'Cotton', 'Tur'], population: '2.2M', zone: 'Vidarbha' },
+                { name: 'Gadchiroli', lat: 20.1764, lng: 80.0112, risk: 'Low', riskScore: 40, crops: ['Rice', 'Bamboo', 'Teak'], population: '1.1M', zone: 'Vidarbha' },
+                { name: 'Gondia', lat: 21.4598, lng: 80.1907, risk: 'Medium', riskScore: 55, crops: ['Rice', 'Cotton', 'Wheat'], population: '1.3M', zone: 'Vidarbha' },
+                { name: 'Bhandara', lat: 21.1702, lng: 79.6507, risk: 'Medium', riskScore: 52, crops: ['Rice', 'Cotton'], population: '1.2M', zone: 'Vidarbha' },
+                
+                // Marathwada
+                { name: 'Aurangabad', lat: 19.8762, lng: 75.3433, risk: 'High', riskScore: 80, crops: ['Cotton', 'Sugarcane', 'Jowar'], population: '3.7M', zone: 'Marathwada' },
+                { name: 'Jalna', lat: 19.8347, lng: 75.8831, risk: 'High', riskScore: 76, crops: ['Cotton', 'Jowar', 'Bajra'], population: '1.9M', zone: 'Marathwada' },
+                { name: 'Parbhani', lat: 19.2608, lng: 76.7611, risk: 'High', riskScore: 83, crops: ['Cotton', 'Jowar', 'Tur'], population: '1.8M', zone: 'Marathwada' },
+                { name: 'Hingoli', lat: 19.7153, lng: 77.1463, risk: 'High', riskScore: 87, crops: ['Cotton', 'Jowar', 'Tur'], population: '1.2M', zone: 'Marathwada' },
+                { name: 'Nanded', lat: 19.1381, lng: 77.3210, risk: 'High', riskScore: 79, crops: ['Cotton', 'Sugarcane', 'Rice'], population: '3.4M', zone: 'Marathwada' },
+                { name: 'Latur', lat: 18.4088, lng: 76.5604, risk: 'High', riskScore: 84, crops: ['Cotton', 'Tur', 'Jowar'], population: '2.5M', zone: 'Marathwada' },
+                { name: 'Osmanabad', lat: 18.1760, lng: 76.0395, risk: 'High', riskScore: 81, crops: ['Cotton', 'Jowar', 'Bajra'], population: '1.7M', zone: 'Marathwada' },
+                { name: 'Beed', lat: 18.9894, lng: 75.7585, risk: 'High', riskScore: 86, crops: ['Cotton', 'Jowar', 'Tur'], population: '2.6M', zone: 'Marathwada' },
+                
+                // Khandesh (North Maharashtra)
+                { name: 'Dhule', lat: 20.9022, lng: 74.7749, risk: 'Medium', riskScore: 68, crops: ['Cotton', 'Sugarcane', 'Banana'], population: '2.1M', zone: 'Khandesh' },
+                { name: 'Jalgaon', lat: 21.0077, lng: 75.5626, risk: 'Medium', riskScore: 63, crops: ['Banana', 'Cotton', 'Sugarcane'], population: '4.2M', zone: 'Khandesh' },
+                { name: 'Nandurbar', lat: 21.3773, lng: 74.2382, risk: 'Medium', riskScore: 58, crops: ['Cotton', 'Jowar', 'Maize'], population: '1.6M', zone: 'Khandesh' }
+            ];
+            
+            districts.forEach(district => {
+                const color = district.risk === 'High' ? '#ef4444' : district.risk === 'Medium' ? '#f59e0b' : '#10b981';
+                const size = Math.max(8, Math.min(16, district.riskScore / 6));
+                
+                // Enhanced marker with risk-based styling
+                const marker = new google.maps.Marker({
+                    position: { lat: district.lat, lng: district.lng },
+                    map: map,
+                    title: `${district.name} - ${district.risk} Risk (${district.riskScore}%)`,
+                    icon: {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: size,
+                        fillColor: color,
+                        fillOpacity: 0.7,
+                        strokeColor: '#ffffff',
+                        strokeWeight: 2
+                    },
+                    animation: district.risk === 'High' ? google.maps.Animation.BOUNCE : null
+                });
+                
+                // Enhanced info window with more data
+                const infoWindowContent = `
+                    <div style="color: black; padding: 15px; max-width: 320px; font-family: Arial, sans-serif;">
+                        <div style="display: flex; align-items: center; margin-bottom: 12px; border-bottom: 2px solid #e5e7eb; padding-bottom: 8px;">
+                            <div>
+                                <h3 style="margin: 0; color: #1f2937; font-size: 16px;">${district.name}</h3>
+                                <div style="font-size: 11px; color: #6b7280; margin-top: 2px;">${district.zone} Maharashtra</div>
+                            </div>
+                            <span style="margin-left: auto; background: ${color}; color: white; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: bold;">
+                                ${district.risk} Risk
+                            </span>
+                        </div>
+                        <div style="background: #f9fafb; padding: 12px; border-radius: 8px; margin-bottom: 12px; border-left: 4px solid ${color};">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                                <span style="font-weight: 600; color: #374151;">🎯 Risk Score:</span>
+                                <span style="color: ${color}; font-weight: bold;">${district.riskScore}%</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                                <span style="font-weight: 600; color: #374151;">👥 Population:</span>
+                                <span style="color: #374151;">${district.population}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                                <span style="font-weight: 600; color: #374151;">🏞️ Zone:</span>
+                                <span style="color: #374151;">${district.zone}</span>
+                            </div>
+                            <div>
+                                <span style="font-weight: 600; color: #374151; display: block; margin-bottom: 6px;">🌾 Major Crops:</span>
+                                <div style="line-height: 1.4;">
+                                    ${district.crops.map(crop => `<span style="background: #e5e7eb; padding: 2px 8px; border-radius: 8px; font-size: 11px; margin: 1px 2px; display: inline-block; color: #374151;">${crop}</span>`).join('')}
+                                </div>
+                            </div>
+                        </div>
+                        <div style="text-align: center; margin-top: 10px;">
+                            <button onclick="showDistrictDetails('${district.name}')" 
+                                    style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; border: none; padding: 8px 16px; border-radius: 8px; font-size: 12px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);" 
+                                    onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 8px rgba(59, 130, 246, 0.4)'" 
+                                    onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(59, 130, 246, 0.3)'">
+                                📊 View Detailed Analysis
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                const infoWindow = new google.maps.InfoWindow({
+                    content: infoWindowContent
+                });
+                
+                marker.addListener('click', () => {
+                    // Close other info windows
+                    mapMarkers.forEach(m => {
+                        if (m.infoWindow) m.infoWindow.close();
+                    });
+                    infoWindow.open(map, marker);
+                });
+                
+                // Store info window reference
+                marker.infoWindow = infoWindow;
+                mapMarkers.push(marker);
+                
+                // Add risk circle overlay for high-risk areas
+                if (district.risk === 'High') {
+                    const riskCircle = new google.maps.Circle({
+                        strokeColor: color,
+                        strokeOpacity: 0.8,
+                        strokeWeight: 1,
+                        fillColor: color,
+                        fillOpacity: 0.1,
+                        map: map,
+                        center: { lat: district.lat, lng: district.lng },
+                        radius: 25000 // 25km radius
+                    });
+                    mapMarkers.push(riskCircle);
+                }
+            });
+        }
+        
+        function addMapInfoPanel() {
+            const infoPanel = document.createElement('div');
+            infoPanel.style.cssText = `
+                position: absolute;
+                top: 10px;
+                left: 10px;
+                background: rgba(17, 24, 39, 0.9);
+                color: white;
+                padding: 10px;
+                border-radius: 8px;
+                font-size: 12px;
+                max-width: 200px;
+                backdrop-filter: blur(10px);
+                border: 1px solid rgba(75, 85, 99, 0.3);
+            `;
+            infoPanel.innerHTML = `
+                <div style="font-weight: bold; margin-bottom: 5px;">📍 Risk Legend</div>
+                <div style="margin-bottom: 3px;"><span style="color: #ef4444;">●</span> High Risk (70%+)</div>
+                <div style="margin-bottom: 3px;"><span style="color: #f59e0b;">●</span> Medium Risk (40-70%)</div>
+                <div style="margin-bottom: 8px;"><span style="color: #10b981;">●</span> Low Risk (<40%)</div>
+                <div style="font-size: 10px; color: #9ca3af;">Click markers for details</div>
+            `;
+            
+            map.controls[google.maps.ControlPosition.TOP_LEFT].push(infoPanel);
+        }
+        
+        function changeMapType() {
+            const mapType = document.getElementById('mapViewSelect').value;
+            map.setMapTypeId(mapType);
+        }
+        
+        function toggleMapLayer(layer) {
+            currentMapLayer = layer;
+            
+            // Clear existing overlays
+            if (heatmapLayer) {
+                heatmapLayer.setMap(null);
+                heatmapLayer = null;
+            }
+            
+            // Apply layer-specific styling
+            switch(layer) {
+                case 'risk':
+                    // Already handled by markers
+                    console.log('Showing risk layer');
+                    break;
+                case 'weather':
+                    addWeatherLayer();
+                    break;
+                case 'soil':
+                    addSoilHealthLayer();
+                    break;
+            }
+        }
+        
+        function addWeatherLayer() {
+            // Simulate weather data points
+            const weatherData = [
+                new google.maps.LatLng(18.5204, 73.8567), // Pune
+                new google.maps.LatLng(19.0760, 72.8777), // Mumbai
+                new google.maps.LatLng(19.9975, 73.7898), // Nashik
+                new google.maps.LatLng(21.1458, 79.0882), // Nagpur
+                new google.maps.LatLng(19.8762, 75.3433), // Aurangabad
+            ];
+            
+            heatmapLayer = new google.maps.visualization.HeatmapLayer({
+                data: weatherData,
+                radius: 50,
+                opacity: 0.6
+            });
+            heatmapLayer.setMap(map);
+        }
+        
+        function addSoilHealthLayer() {
+            // Add soil health indicators
+            const soilData = [
+                { lat: 18.5204, lng: 73.8567, health: 'good' },
+                { lat: 19.0760, lng: 72.8777, health: 'excellent' },
+                { lat: 19.9975, lng: 73.7898, health: 'poor' },
+                { lat: 21.1458, lng: 79.0882, health: 'good' }
+            ];
+            
+            soilData.forEach(point => {
+                const color = point.health === 'excellent' ? '#10b981' : 
+                             point.health === 'good' ? '#f59e0b' : '#ef4444';
+                
+                new google.maps.Circle({
+                    strokeColor: color,
+                    strokeOpacity: 0.8,
+                    strokeWeight: 2,
+                    fillColor: color,
+                    fillOpacity: 0.35,
+                    map: map,
+                    center: { lat: point.lat, lng: point.lng },
+                    radius: 30000
+                });
+            });
+        }
+        
+        function showDistrictDetails(districtName) {
+            // Show detailed information for a district
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.7);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10000;
+            `;
+            
+            modal.innerHTML = `
+                <div style="background: #1f2937; padding: 30px; border-radius: 12px; max-width: 500px; width: 90%; color: white;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h2 style="margin: 0; color: #10b981;">${districtName} District Analysis</h2>
+                        <button onclick="this.parentElement.parentElement.parentElement.remove()" style="background: none; border: none; color: #9ca3af; font-size: 24px; cursor: pointer;">&times;</button>
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <h3 style="color: #3b82f6; margin: 0 0 10px 0;">Risk Factors</h3>
+                        <div style="background: #374151; padding: 15px; border-radius: 8px;">
+                            <div style="margin-bottom: 8px;">• Pest Risk: High (Bollworm infestation)</div>
+                            <div style="margin-bottom: 8px;">• Weather Impact: Moderate (High humidity)</div>
+                            <div style="margin-bottom: 8px;">• Soil Conditions: Good (Balanced NPK)</div>
+                        </div>
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <h3 style="color: #3b82f6; margin: 0 0 10px 0;">Recommendations</h3>
+                        <div style="background: #374151; padding: 15px; border-radius: 8px;">
+                            <div style="margin-bottom: 8px;">• Apply integrated pest management</div>
+                            <div style="margin-bottom: 8px;">• Monitor weather patterns closely</div>
+                            <div style="margin-bottom: 8px;">• Consider drought-resistant varieties</div>
+                        </div>
+                    </div>
+                    <div style="text-align: center;">
+                        <button onclick="this.parentElement.parentElement.remove()" style="background: #10b981; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer;">Close</button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+        }
+        
+        function loadZoneMapping() {
+            // Load zone-wise risk data
+            fetch('/zone_summary')
+                .then(response => response.json())
+                .then(data => {
+                    displayZoneRisks(data);
+                })
+                .catch(error => console.error('Error loading zone data:', error));
+        }
+        
+        function displayZoneRisks(zoneData) {
+            const container = document.getElementById('zoneRiskGrid');
+            container.innerHTML = '';
+            
+            Object.keys(zoneData).forEach(zoneName => {
+                const zone = zoneData[zoneName];
+                const riskColor = zone.risk_level === 'High' ? 'red' : zone.risk_level === 'Moderate' ? 'yellow' : 'green';
+                
+                const zoneCard = document.createElement('div');
+                zoneCard.className = 'glass-morphism rounded-lg p-6 risk-card';
+                zoneCard.innerHTML = `
+                    <div class="flex items-center justify-between mb-4">
+                        <h4 class="font-bold text-lg">${zoneName}</h4>
+                        <div class="w-4 h-4 rounded-full bg-${riskColor}-500"></div>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Average Risk:</span>
+                            <span class="font-bold text-${riskColor}-400">${zone.avg_risk}%</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">High Risk Districts:</span>
+                            <span class="font-bold">${zone.high_risk_districts}/${zone.total_districts}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Status:</span>
+                            <span class="font-bold text-${riskColor}-400">${zone.risk_level}</span>
+                        </div>
+                    </div>
+                    <div class="mt-4 w-full bg-gray-700 rounded-full h-2">
+                        <div class="bg-${riskColor}-500 h-2 rounded-full" style="width: ${zone.avg_risk}%"></div>
+                    </div>
+                `;
+                
+                container.appendChild(zoneCard);
+            });
+        }
+        
+        // Perform complete analysis
+        function performCompleteAnalysis() {
+            // Show loading
+            document.getElementById('loadingModal').classList.remove('hidden');
+            
+            // Collect all form data
+            const formData = new FormData();
+            formData.append('district', document.getElementById('districtSelect').value);
+            formData.append('crop_type', document.getElementById('cropSelect').value);
+            formData.append('farm_area', document.getElementById('farmArea').value);
+            
+            // Soil data
+            formData.append('n_value', document.getElementById('soilN').value);
+            formData.append('p_value', document.getElementById('soilP').value);
+            formData.append('k_value', document.getElementById('soilK').value);
+            formData.append('ph_value', document.getElementById('soilPH').value);
+            formData.append('moisture_value', document.getElementById('soilMoisture').value);
+            
+            // Weather data (optional overrides)
+            const temp = document.getElementById('weatherTemp').value;
+            const humidity = document.getElementById('weatherHumidity').value;
+            const rainfall = document.getElementById('weatherRainfall').value;
+            
+            if (temp) formData.append('temperature', temp);
+            if (humidity) formData.append('humidity', humidity);
+            if (rainfall) formData.append('rainfall', rainfall);
+            
+            // Crop image if uploaded
+            const imageFile = document.getElementById('imageInput').files[0];
+            if (imageFile) {
+                formData.append('crop_image', imageFile);
+            }
+            
+            // Send to server
+            fetch('/analyze_crop', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('loadingModal').classList.add('hidden');
+                if (data.status === 'success') {
+                    displayAnalysisResults(data);
+                    document.getElementById('analysisResults').classList.remove('hidden');
+                } else {
+                    alert('Error performing analysis: ' + data.message);
+                }
+            })
+            .catch(error => {
+                document.getElementById('loadingModal').classList.add('hidden');
+                console.error('Error:', error);
+                alert('Error performing analysis');
+            });
+        }
+        
+        function displayAnalysisResults(data) {
+            try {
+                console.log('Analysis data:', data);
+                
+                // Update health cards with safe defaults
+                let health = 72;
+                if (data.image_analysis && data.image_analysis.health_score) {
+                    health = data.image_analysis.health_score;
+                } else if (data.soil_analysis && data.soil_analysis.soil_score) {
+                    health = Math.round(data.soil_analysis.soil_score * 0.8); // Estimate from soil
+                }
+                
+                document.getElementById('overallHealthStatus').textContent = 
+                    health > 80 ? 'Excellent' : health > 60 ? 'Good' : health > 40 ? 'Fair' : 'Poor';
+                document.getElementById('healthIndex').textContent = health + '/100';
+                document.getElementById('healthProgress').style.width = health + '%';
+                
+                // Update soil data safely
+                if (data.soil_analysis) {
+                    const soilScore = data.soil_analysis.soil_score || 75;
+                    const ph = data.soil_analysis.ph || 6.5;
+                    const npk = data.soil_analysis.npk_levels || {N: 50, P: 30, K: 40};
+                    
+                    document.getElementById('soilScore').textContent = soilScore + '/100';
+                    document.getElementById('soilDetails').textContent = 
+                        `pH: ${ph} | N:${npk.N} P:${npk.P} K:${npk.K}`;
+                    document.getElementById('soilProgress').style.width = soilScore + '%';
+                }
+                
+                // Update weather data safely
+                if (data.weather_analysis && data.weather_analysis.current) {
+                    const weather = data.weather_analysis.current;
+                    document.getElementById('currentTemp').textContent = 
+                        Math.round(weather.temperature || 25) + '°C';
+                    document.getElementById('weatherStatus').textContent = 
+                        weather.description || 'Clear';
+                    document.getElementById('weatherDetails').textContent = 
+                        `Humidity: ${Math.round(weather.humidity || 60)}% | Wind: ${(weather.wind_speed || 2.5).toFixed(1)} m/s`;
+                }
+                
+                // Update pest risk safely
+                if (data.pest_risk_assessment) {
+                    const pestRisk = data.pest_risk_assessment;
+                    document.getElementById('pestRiskPercentage').textContent = 
+                        Math.round(pestRisk.overall_risk || 50) + '%';
+                    document.getElementById('pestRiskLevel').textContent = 
+                        pestRisk.risk_category || 'Medium Risk';
+                    
+                    if (pestRisk.pest_details && pestRisk.pest_details.length > 0) {
+                        document.getElementById('mainPest').textContent = 
+                            pestRisk.pest_details[0].name || 'General Pests';
+                    } else {
+                        document.getElementById('mainPest').textContent = 'Monitor Regularly';
+                    }
+                }
+                
+                // Plot user-friendly health graph
+                plotUserFriendlyHealthTrend(health, 7);
+                
+                // Display recommendations
+                if (data.fertilizer_recommendations && document.getElementById('includeFertilizer').checked) {
+                    displayFertilizerResults(data.fertilizer_recommendations);
+                } else {
+                    document.getElementById('fertilizerContent').innerHTML = 
+                        '<p class="text-gray-400">Fertilizer analysis not requested.</p>';
+                }
+                
+                if (data.irrigation_plan && document.getElementById('includeIrrigation').checked) {
+                    displayIrrigationResults(data.irrigation_plan);
+                } else {
+                    document.getElementById('irrigationContent').innerHTML = 
+                        '<p class="text-gray-400">Irrigation analysis not requested.</p>';
+                }
+                
+                // Simple disease chart
+                plotSimpleDiseaseChart(data);
+                
+            } catch (error) {
+                console.error('Error displaying results:', error);
+                alert('Error displaying analysis results. Please check the console for details.');
+            }
+        }
+        
+        // Global variable to store health data
+        let healthTrendData = { current: 72, dates: [], scores: [], trend: 'stable' };
+        
+        function plotUserFriendlyHealthTrend(currentHealth = 72, days = 7) {
+            try {
+                const dates = [];
+                const healthScores = [];
+                const soilHealthScores = [];
+                const avgScores = [];
+                
+                // Generate data for the specified number of days
+                for (let i = days - 1; i >= 0; i--) {
+                    const date = new Date();
+                    date.setDate(date.getDate() - i);
+                    dates.push(days <= 7 ? date.toLocaleDateString('en-US', {weekday: 'short', day: 'numeric'}) : date.toLocaleDateString());
+                    
+                    // More realistic health progression
+                    const progress = (days - 1 - i) / (days - 1);
+                    const baseHealth = currentHealth - 15 + (progress * 10);
+                    const seasonalVar = Math.sin((i / days) * Math.PI * 2) * 5;
+                    const randomVar = (Math.random() - 0.5) * 8;
+                    
+                    const plantHealth = Math.max(20, Math.min(100, baseHealth + seasonalVar + randomVar));
+                    const soilHealth = Math.max(30, Math.min(100, baseHealth + 10 + seasonalVar * 0.5 + randomVar * 0.7));
+                    
+                    healthScores.push(Math.round(plantHealth));
+                    soilHealthScores.push(Math.round(soilHealth));
+                    avgScores.push(Math.round((plantHealth + soilHealth) / 2));
+                }
+                
+                // Store for export
+                healthTrendData = {
+                    current: currentHealth,
+                    dates: dates,
+                    scores: healthScores,
+                    soilScores: soilHealthScores,
+                    avgScores: avgScores,
+                    trend: healthScores[healthScores.length - 1] > healthScores[0] ? 'improving' : 
+                           healthScores[healthScores.length - 1] < healthScores[0] ? 'declining' : 'stable'
+                };
+                
+                // Create traces
+                const traces = [
+                    {
+                        x: dates,
+                        y: healthScores,
+                        type: 'scatter',
+                        mode: document.getElementById('chkSmooth')?.checked ? 'lines+markers' : 'lines+markers',
+                        name: 'Plant Health',
+                        line: { 
+                            color: '#10b981', 
+                            width: 3,
+                            shape: document.getElementById('chkSmooth')?.checked ? 'spline' : 'linear'
+                        },
+                        marker: { size: 6, color: '#10b981', symbol: 'circle' },
+                        fill: 'tonexty',
+                        fillcolor: 'rgba(16, 185, 129, 0.15)'
+                    },
+                    {
+                        x: dates,
+                        y: soilHealthScores,
+                        type: 'scatter',
+                        mode: 'lines+markers',
+                        name: 'Soil Health',
+                        line: { 
+                            color: '#3b82f6', 
+                            width: 2,
+                            shape: document.getElementById('chkSmooth')?.checked ? 'spline' : 'linear',
+                            dash: 'dot'
+                        },
+                        marker: { size: 4, color: '#3b82f6', symbol: 'square' }
+                    }
+                ];
+                
+                // Dynamic title and insights
+                const trend = healthTrendData.trend;
+                const trendIcon = trend === 'improving' ? '📈' : trend === 'declining' ? '📉' : '📊';
+                const insights = `${trendIcon} Trend: ${trend.toUpperCase()} | Current: ${currentHealth}% | ${days}-day average: ${Math.round(avgScores.reduce((a,b) => a+b, 0)/avgScores.length)}%`;
+                
+                const isDark = true; // page uses dark UI styling
+                const layout = {
+                    title: { 
+                        text: `Plant Health Monitoring (${days} Days)<br><span style="font-size: 12px; color: #9ca3af;">${insights}</span>`,
+                        font: { color: '#f3f4f6', size: 16 } 
+                    },
+                    xaxis: { 
+                        title: 'Timeline', 
+                        color: '#9ca3af',
+                        showgrid: true,
+                        gridcolor: 'rgba(75, 85, 99, 0.2)',
+                        showline: true,
+                        linecolor: 'rgba(156, 163, 175, 0.3)',
+                        tickangle: -35,
+                        automargin: true,
+                        tickfont: { size: 12, color: '#d1d5db' }
+                    },
+                    yaxis: { 
+                        title: 'Health Score (%)', 
+                        color: '#9ca3af', 
+                        range: [0, 100],
+                        showgrid: true,
+                        gridcolor: 'rgba(75, 85, 99, 0.3)',
+                        showline: true,
+                        linecolor: 'rgba(156, 163, 175, 0.3)',
+                        dtick: 20
+                    },
+                    plot_bgcolor: 'rgba(0,0,0,0)',
+                    paper_bgcolor: 'rgba(0,0,0,0)',
+                    font: { color: '#f3f4f6' },
+                    margin: { t: 80, r: 40, b: 90, l: 70 },
+                    legend: {
+                        x: 0.02,
+                        y: 0.98,
+                        bgcolor: 'rgba(55, 65, 81, 0.8)',
+                        bordercolor: 'rgba(156, 163, 175, 0.3)',
+                        borderwidth: 1,
+                        font: { size: 11 }
+                    },
+                    annotations: [{
+                        text: trend === 'improving' ? 'Health is improving 👍' : 
+                              trend === 'declining' ? 'Attention needed ⚠️' : 'Stable condition ✓',
+                        x: 0.95,
+                        y: 0.05,
+                        xref: 'paper',
+                        yref: 'paper',
+                        showarrow: false,
+                        font: { size: 10, color: trend === 'improving' ? '#10b981' : trend === 'declining' ? '#ef4444' : '#f59e0b' },
+                        bgcolor: 'rgba(55, 65, 81, 0.8)',
+                        bordercolor: trend === 'improving' ? '#10b981' : trend === 'declining' ? '#ef4444' : '#f59e0b',
+                        borderwidth: 1
+                    }]
+                };
+                
+                const config = {
+                    responsive: true,
+                    displayModeBar: true,
+                    modeBarButtonsToRemove: ['pan2d', 'select2d', 'lasso2d', 'autoScale2d', 'hoverClosestCartesian', 'hoverCompareCartesian'],
+                    displaylogo: false,
+                    toImageButtonOptions: {
+                        format: 'png',
+                        filename: `health_trend_${days}d_${new Date().toISOString().split('T')[0]}`,
+                        height: 400,
+                        width: 800,
+                        scale: 2
+                    }
+                };
+                
+                Plotly.newPlot('plantHealthChart', traces, layout, config);
+                
+                // Setup interactive controls
+                setupHealthTrendControls(currentHealth);
+                
+            } catch (error) {
+                console.error('Error plotting health trend:', error);
+                document.getElementById('plantHealthChart').innerHTML = 
+                    `<div class="text-center text-gray-400 py-12">
+                        <i class="fas fa-exclamation-triangle text-3xl mb-4"></i>
+                        <p>Unable to load health trend chart</p>
+                        <p class="text-xs mt-2">Error: ${error.message}</p>
+                    </div>`;
+            }
+        }
+        
+        function setupHealthTrendControls(currentHealth) {
+            // 7-day button
+            document.getElementById('btnHealth7')?.addEventListener('click', () => {
+                document.getElementById('btnHealth7').className = 'px-2 py-1 rounded bg-green-600 text-white';
+                document.getElementById('btnHealth30').className = 'px-2 py-1 rounded text-gray-200 hover:bg-gray-700';
+                plotUserFriendlyHealthTrend(currentHealth, 7);
+            });
+            
+            // 30-day button
+            document.getElementById('btnHealth30')?.addEventListener('click', () => {
+                document.getElementById('btnHealth30').className = 'px-2 py-1 rounded bg-green-600 text-white';
+                document.getElementById('btnHealth7').className = 'px-2 py-1 rounded text-gray-200 hover:bg-gray-700';
+                plotUserFriendlyHealthTrend(currentHealth, 30);
+            });
+            
+            // Smooth checkbox
+            document.getElementById('chkSmooth')?.addEventListener('change', () => {
+                const days = document.getElementById('btnHealth30').className.includes('bg-green-600') ? 30 : 7;
+                plotUserFriendlyHealthTrend(currentHealth, days);
+            });
+            
+            // Download button
+            document.getElementById('btnDownloadHealth')?.addEventListener('click', () => {
+                downloadHealthData();
+            });
+        }
+        
+        function downloadHealthData() {
+            const csvContent = [
+                ['Date', 'Plant Health (%)', 'Soil Health (%)', 'Average (%)'],
+                ...healthTrendData.dates.map((date, i) => [
+                    date,
+                    healthTrendData.scores[i],
+                    healthTrendData.soilScores[i],
+                    healthTrendData.avgScores[i]
+                ])
+            ].map(row => row.join(',')).join('\n');
+            
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `health_trend_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+        
+        function displayFertilizerResults(fertilizerData) {
+            const container = document.getElementById('fertilizerContent');
+            let html = '<div class="space-y-4">';
+            
+            // Display fertilizer plan
+            if (fertilizerData.fertilizer_plan && fertilizerData.fertilizer_plan.length > 0) {
+                html += '<h4 class="font-bold text-green-400 mb-3">Recommended Fertilizers</h4>';
+                html += '<div class="grid grid-cols-1 md:grid-cols-2 gap-4">';
+                
+                fertilizerData.fertilizer_plan.forEach(item => {
+                    html += `
+                        <div class="bg-gray-800 rounded-lg p-4">
+                            <div class="flex justify-between items-center mb-2">
+                                <div class="font-semibold text-white">${item.name}</div>
+                                <div class="text-lg font-bold text-yellow-400">₹${item.total_cost}</div>
+                            </div>
+                            <div class="text-sm text-gray-400 mb-2">${item.quantity} ${item.unit} @ ₹${item.cost_per_kg}/${item.unit}</div>
+                            <div class="text-xs text-gray-500">${item.application}</div>
+                        </div>
+                    `;
+                });
+                
+                html += '</div>';
+                
+                // Total cost summary
+                html += `
+                    <div class="mt-4 bg-gray-800 rounded-lg p-4">
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold text-lg">Total Investment Required:</span>
+                            <span class="font-bold text-2xl text-yellow-400">₹${fertilizerData.total_cost}</span>
+                        </div>
+                        <div class="text-sm text-gray-400 mt-1">₹${fertilizerData.cost_per_hectare} per hectare</div>
+                    </div>
+                `;
+            } else {
+                html += '<p class="text-gray-400">No specific fertilizer recommendations needed at this time.</p>';
+            }
+            
+            html += '</div>';
+            container.innerHTML = html;
+        }
+        
+        function displayIrrigationResults(irrigationData) {
+            const container = document.getElementById('irrigationContent');
+            let html = '<div class="space-y-4">';
+            
+            // Irrigation summary
+            html += `
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div class="bg-blue-900 bg-opacity-30 rounded-lg p-4 text-center">
+                        <div class="text-2xl font-bold text-blue-400">${irrigationData.total_mm} mm</div>
+                        <div class="text-sm text-gray-400">Total Water (7 days)</div>
+                    </div>
+                    <div class="bg-blue-900 bg-opacity-30 rounded-lg p-4 text-center">
+                        <div class="text-2xl font-bold text-blue-400">${irrigationData.total_litres.toLocaleString()} L</div>
+                        <div class="text-sm text-gray-400">Total Litres</div>
+                    </div>
+                    <div class="bg-blue-900 bg-opacity-30 rounded-lg p-4 text-center">
+                        <div class="text-2xl font-bold text-blue-400">${Math.round(irrigationData.total_mm / 7 * 10) / 10} mm</div>
+                        <div class="text-sm text-gray-400">Daily Average</div>
+                    </div>
+                </div>
+            `;
+            
+            // 7-day schedule
+            if (irrigationData.schedule) {
+                html += '<h4 class="font-bold text-blue-400 mb-3">7-Day Irrigation Schedule</h4>';
+                html += '<div class="space-y-2">';
+                
+                irrigationData.schedule.forEach(day => {
+                    const date = new Date(day.date).toLocaleDateString();
+                    const statusColor = day.mm_water > 5 ? 'text-blue-400' : day.mm_water > 0 ? 'text-yellow-400' : 'text-green-400';
+                    
+                    html += `
+                        <div class="bg-gray-800 rounded-lg p-3 flex justify-between items-center">
+                            <div>
+                                <div class="font-semibold">${date}</div>
+                                <div class="text-sm text-gray-400">${day.note}</div>
+                            </div>
+                            <div class="text-right">
+                                <div class="font-bold ${statusColor}">${day.mm_water} mm</div>
+                                <div class="text-xs text-gray-500">Rain: ${day.rain_mm} mm</div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                html += '</div>';
+            }
+            
+            // Irrigation advice
+            if (irrigationData.advice) {
+                html += '<div class="mt-4"><h4 class="font-bold text-blue-400 mb-2">Irrigation Tips</h4><ul class="list-disc list-inside text-sm text-gray-300 space-y-1">';
+                irrigationData.advice.forEach(tip => {
+                    html += `<li>${tip}</li>`;
+                });
+                html += '</ul></div>';
+            }
+            
+            html += '</div>';
+            container.innerHTML = html;
+        }
+        
+        function plotSimpleDiseaseChart(data) {
+            try {
+                let healthyPercent = 85;
+                let diseasePercent = 15;
+                
+                // Use actual data if available
+                if (data.image_analysis && data.image_analysis.disease_detection) {
+                    const confidence = data.image_analysis.disease_detection.confidence || 15;
+                    diseasePercent = Math.round(confidence);
+                    healthyPercent = 100 - diseasePercent;
+                } else if (data.soil_analysis) {
+                    // Estimate from soil health
+                    const soilScore = data.soil_analysis.soil_score || 75;
+                    healthyPercent = Math.max(60, Math.min(95, soilScore + 10));
+                    diseasePercent = 100 - healthyPercent;
+                }
+                
+                // Accessible, theme-friendly colors
+                const isDark = true;
+                const healthyColor = isDark ? '#10b981' : '#059669';
+                const warnColor = isDark ? '#f59e0b' : '#d97706';
+                const dangerColor = isDark ? '#ef4444' : '#dc2626';
+                const riskColor = diseasePercent > 30 ? dangerColor : warnColor;
+
+                const trace = {
+                    x: ['Healthy', 'Disease Risk'],
+                    y: [healthyPercent, diseasePercent],
+                    type: 'bar',
+                    marker: {
+                        color: [healthyColor, riskColor],
+                        line: {
+                            color: 'rgba(255,255,255,0.15)',
+                            width: 1
+                        }
+                    },
+                    text: [healthyPercent + '%', diseasePercent + '%'],
+                    textposition: 'inside',
+                    textfont: { color: 'white', size: 14 }
+                };
+                
+                const layout = {
+                    title: { 
+                        text: 'Crop Health Assessment', 
+                        font: { color: '#f3f4f6', size: 16 } 
+                    },
+                    xaxis: { 
+                        title: 'Status', 
+                        color: '#9ca3af',
+                        showgrid: false,
+                        tickangle: 0,
+                        automargin: true,
+                        tickfont: { size: 12, color: '#e5e7eb' }
+                    },
+                    yaxis: { 
+                        title: 'Probability (%)', 
+                        color: '#9ca3af',
+                        range: [0, 100],
+                        showgrid: true,
+                        gridcolor: 'rgba(75, 85, 99, 0.3)'
+                    },
+                    plot_bgcolor: 'rgba(0,0,0,0)',
+                    paper_bgcolor: 'rgba(0,0,0,0)',
+                    font: { color: '#f3f4f6' },
+                    margin: { t: 50, r: 30, b: 70, l: 60 }
+                };
+                
+                Plotly.newPlot('diseaseChart', [trace], layout, { 
+                    responsive: true,
+                    displayModeBar: false
+                });
+            } catch (error) {
+                console.error('Error plotting disease chart:', error);
+                document.getElementById('diseaseChart').innerHTML = 
+                    '<div class="text-center text-gray-400 py-8">Unable to load disease analysis chart</div>';
+            }
+        }
+        
+        // Export dashboard data
+        function exportDashboardData() {
+            const data = {
+                timestamp: new Date().toISOString(),
+                district: document.getElementById('districtSelect').value,
+                crop: document.getElementById('cropSelect').value,
+                farm_area: document.getElementById('farmArea').value,
+                ndvi: document.getElementById('ndviIndex').textContent,
+                soil_data: {
+                    nitrogen: document.getElementById('soilN').value,
+                    phosphorus: document.getElementById('soilP').value,
+                    potassium: document.getElementById('soilK').value,
+                    ph: document.getElementById('soilPH').value,
+                    moisture: document.getElementById('soilMoisture').value
+                },
+                weather_data: {
+                    temperature: document.getElementById('weatherTemp').value,
+                    humidity: document.getElementById('weatherHumidity').value,
+                    rainfall: document.getElementById('weatherRainfall').value
+                }
+            };
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'farm-analysis-export.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>

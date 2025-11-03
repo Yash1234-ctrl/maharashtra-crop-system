@@ -1,0 +1,85 @@
+{
+  "validation_summary": {
+    "overall_score": 95.998,
+    "data_score": 100.0,
+    "module_score": 100,
+    "integration_score": 99.99,
+    "api_score": 100,
+    "improvement_score": 80,
+    "timestamp": "2025-10-01T17:30:49.521222"
+  },
+  "detailed_results": {
+    "data_files": {
+      "csv_files_present": 6,
+      "csv_files_total": 6,
+      "data_quality": [
+        {
+          "file": "agriculture_dataset.csv",
+          "records": 212019,
+          "columns": 32,
+          "status": "valid"
+        },
+        {
+          "file": "Crop and fertilizer dataset.csv",
+          "records": 4513,
+          "columns": 11,
+          "status": "valid"
+        },
+        {
+          "file": "Crop_recommendationV2.csv",
+          "records": 2200,
+          "columns": 23,
+          "status": "valid"
+        },
+        {
+          "file": "weather_data.csv",
+          "records": 558,
+          "columns": 16,
+          "status": "valid"
+        },
+        {
+          "file": "Fertilizer Prediction.csv",
+          "records": 99,
+          "columns": 9,
+          "status": "valid"
+        },
+        {
+          "file": "Fertilizer.csv",
+          "records": 10151,
+          "columns": 75,
+          "status": "valid"
+        }
+      ]
+    },
+    "modules": {
+      "data_processor": true,
+      "backend_api": true,
+      "processor_functions": [
+        "load_all_datasets",
+        "create_integrated_features",
+        "train_enhanced_models"
+      ],
+      "api_functions": [
+        "extract_enhanced_crop_features",
+        "predict_enhanced_crop_health"
+      ]
+    },
+    "integration": {
+      "datasets_loaded": true,
+      "features_created": true,
+      "integration_successful": true
+    },
+    "api": {
+      "api_initialized": true,
+      "feature_extraction": true,
+      "prediction_working": true
+    },
+    "improvements": {
+      "data_integration": true,
+      "enhanced_features": true,
+      "multi_model_support": false,
+      "performance_optimizations": true,
+      "comprehensive_analytics": true
+    }
+  }
+}

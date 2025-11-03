@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clean Weather Trend Analysis</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a1f3a 0%, #2d3561 50%, #3d4875 100%);
+            font-family: 'Arial', sans-serif;
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(20, 25, 40, 0.9);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+            color: #4A9EFF;
+            font-weight: bold;
+        }
+        
+        .header p {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        .weather-section {
+            margin-bottom: 30px;
+        }
+        
+        .section-title {
+            font-size: 22px;
+            color: white;
+            margin-bottom: 20px;
+            padding-left: 10px;
+            border-left: 4px solid #4A9EFF;
+        }
+        
+        .weather-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 20px;
+        }
+        
+        .chart-container {
+            background: rgba(20, 25, 40, 1);
+            border-radius: 10px;
+            padding: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .chart-title {
+            font-size: 16px;
+            color: white;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .chart-content {
+            height: 200px;
+        }
+        
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 200px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        .current-weather {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .weather-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .weather-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #4A9EFF;
+            margin-bottom: 5px;
+        }
+        
+        .weather-label {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .refresh-btn {
+            background: #4A9EFF;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: background 0.3s;
+            margin: 20px auto;
+            display: block;
+        }
+        
+        .refresh-btn:hover {
+            background: #3d8bff;
+        }
+        
+        @media (max-width: 768px) {
+            .weather-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .current-weather {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Weather Trend Analysis (Last 30 Days)</h1>
+            <p>Clean, accurate weather data for Maharashtra agricultural regions</p>
+        </div>
+        
+        <!-- Current Weather Conditions -->
+        <div class="current-weather" id="currentWeather">
+            <div class="weather-card">
+                <div class="weather-value" id="currentTemp">--°C</div>
+                <div class="weather-label">Temperature</div>
+            </div>
+            <div class="weather-card">
+                <div class="weather-value" id="currentHumidity">--%</div>
+                <div class="weather-label">Humidity</div>
+            </div>
+            <div class="weather-card">
+                <div class="weather-value" id="currentRainfall">-- mm</div>
+                <div class="weather-label">Rainfall</div>
+            </div>
+            <div class="weather-card">
+                <div class="weather-value" id="currentWind">-- m/s</div>
+                <div class="weather-label">Wind Speed</div>
+            </div>
+        </div>
+        
+        <button class="refresh-btn" onclick="loadWeatherData()">Refresh Weather Data</button>
+        
+        <!-- Weather Trends Section -->
+        <div class="weather-section">
+            <h2 class="section-title">Weather Trends</h2>
+            
+            <div class="weather-grid">
+                <!-- Temperature Trend -->
+                <div class="chart-container">
+                    <div class="chart-title">Temperature Trend</div>
+                    <div class="chart-content" id="temperatureChart">
+                        <div class="loading">Loading temperature data...</div>
+                    </div>
+                </div>
+                
+                <!-- Humidity Trend -->
+                <div class="chart-container">
+                    <div class="chart-title">Humidity Trend</div>
+                    <div class="chart-content" id="humidityChart">
+                        <div class="loading">Loading humidity data...</div>
+                    </div>
+                </div>
+                
+                <!-- Rainfall Pattern -->
+                <div class="chart-container">
+                    <div class="chart-title">Rainfall Pattern</div>
+                    <div class="chart-content" id="rainfallChart">
+                        <div class="loading">Loading rainfall data...</div>
+                    </div>
+                </div>
+                
+                <!-- Wind Speed -->
+                <div class="chart-container">
+                    <div class="chart-title">Wind Speed</div>
+                    <div class="chart-content" id="windSpeedChart">
+                        <div class="loading">Loading wind data...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Load weather data on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadWeatherData();
+            loadWeatherGraphs();
+        });
+        
+        // Load current weather conditions
+        async function loadWeatherData() {
+            try {
+                const response = await fetch('/api/weather_data');
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    document.getElementById('currentTemp').textContent = data.current.temperature + '°C';
+                    document.getElementById('currentHumidity').textContent = data.current.humidity + '%';
+                    document.getElementById('currentRainfall').textContent = data.current.rainfall + ' mm';
+                    document.getElementById('currentWind').textContent = data.current.wind_speed + ' m/s';
+                }
+            } catch (error) {
+                console.error('Error loading weather data:', error);
+            }
+        }
+        
+        // Load weather trend graphs
+        async function loadWeatherGraphs() {
+            try {
+                const response = await fetch('/api/weather_graphs');
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    // Load each chart
+                    loadChart('temperatureChart', data.graphs.temperature);
+                    loadChart('humidityChart', data.graphs.humidity);
+                    loadChart('rainfallChart', data.graphs.rainfall);
+                    loadChart('windSpeedChart', data.graphs.wind_speed);
+                }
+            } catch (error) {
+                console.error('Error loading weather graphs:', error);
+                // Show error message in charts
+                document.getElementById('temperatureChart').innerHTML = '<div class="loading">Failed to load chart</div>';
+                document.getElementById('humidityChart').innerHTML = '<div class="loading">Failed to load chart</div>';
+                document.getElementById('rainfallChart').innerHTML = '<div class="loading">Failed to load chart</div>';
+                document.getElementById('windSpeedChart').innerHTML = '<div class="loading">Failed to load chart</div>';
+            }
+        }
+        
+        // Helper function to load individual charts
+        function loadChart(containerId, htmlContent) {
+            if (htmlContent) {
+                document.getElementById(containerId).innerHTML = htmlContent;
+            } else {
+                document.getElementById(containerId).innerHTML = '<div class="loading">No data available</div>';
+            }
+        }
+        
+        // Refresh data every 5 minutes
+        setInterval(() => {
+            loadWeatherData();
+        }, 300000); // 5 minutes
+    </script>
+</body>
+</html>

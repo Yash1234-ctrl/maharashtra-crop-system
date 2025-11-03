@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Weather Map</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 1rem;
+            text-align: center;
+            color: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .container {
+            display: flex;
+            height: calc(100vh - 80px);
+            gap: 10px;
+            padding: 10px;
+        }
+
+        .map-container {
+            flex: 2;
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+
+        .weather-panel {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            overflow-y: auto;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .search-container {
+            margin-bottom: 20px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .weather-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .weather-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .weather-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            font-size: 14px;
+        }
+
+        .weather-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .forecast-container {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .forecast-day {
+            background: rgba(255, 255, 255, 0.1);
+            margin: 8px 0;
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 4px solid #fff;
+        }
+
+        .loading {
+            text-align: center;
+            color: #666;
+            padding: 20px;
+        }
+
+        .error {
+            background: #ff6b6b;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+
+        .coordinates {
+            font-size: 12px;
+            color: #888;
+            margin-top: 10px;
+        }
+
+        .instruction {
+            background: rgba(102, 126, 234, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            color: #444;
+            font-size: 14px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+                height: auto;
+            }
+            
+            .map-container {
+                height: 400px;
+            }
+            
+            .weather-panel {
+                flex: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🌦️ Interactive Weather Map</h1>
+        <p>Click anywhere on the map to get weather information</p>
+    </div>
+
+    <div class="container">
+        <div class="map-container">
+            <div id="map"></div>
+        </div>
+
+        <div class="weather-panel">
+            <div class="search-container">
+                <input type="text" id="searchInput" class="search-input" 
+                       placeholder="🔍 Search for a location...">
+            </div>
+
+            <div class="instruction">
+                💡 <strong>How to use:</strong><br>
+                • Click anywhere on the map to get weather data<br>
+                • Use the search box to find specific locations<br>
+                • Weather data updates automatically
+            </div>
+
+            <div id="weatherContent">
+                <div class="loading">
+                    📍 Click on the map or search for a location to view weather information
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API Keys
+        const WEATHER_API_KEY = '5T4RN5AM9XUUVEEHMCJNCDCC4';
+        const WEATHER_BASE_URL = 'https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline';
+
+        let map;
+        let currentWeatherMarker;
+        let searchBox;
+
+        // Initialize Google Map
+        function initMap() {
+            map = new google.maps.Map(document.getElementById('map'), {
+                zoom: 10,
+                center: { lat: 28.6139, lng: 77.2090 }, // Delhi, India default
+                styles: [
+                    {
+                        featureType: 'water',
+                        elementType: 'geometry',
+                        stylers: [{ color: '#667eea' }]
+                    },
+                    {
+                        featureType: 'landscape',
+                        elementType: 'geometry',
+                        stylers: [{ color: '#f5f5f5' }]
+                    }
+                ]
+            });
+
+            // Set up search box
+            const input = document.getElementById('searchInput');
+            searchBox = new google.maps.places.SearchBox(input);
+
+            // Bias the SearchBox results towards current map's viewport
+            map.addListener('bounds_changed', () => {
+                searchBox.setBounds(map.getBounds());
+            });
+
+            // Listen for the event fired when the user selects a prediction
+            searchBox.addListener('places_changed', () => {
+                const places = searchBox.getPlaces();
+                if (places.length === 0) return;
+
+                const place = places[0];
+                if (!place.geometry || !place.geometry.location) return;
+
+                map.setCenter(place.geometry.location);
+                map.setZoom(12);
+
+                // Get weather for searched location
+                getWeatherData(
+                    place.geometry.location.lat(),
+                    place.geometry.location.lng(),
+                    place.formatted_address || place.name
+                );
+            });
+
+            // Add click listener for map
+            map.addListener('click', (event) => {
+                const lat = event.latLng.lat();
+                const lng = event.latLng.lng();
+                
+                // Get location name from coordinates
+                const geocoder = new google.maps.Geocoder();
+                geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+                    if (status === 'OK' && results[0]) {
+                        const locationName = results[0].formatted_address;
+                        getWeatherData(lat, lng, locationName);
+                    } else {
+                        getWeatherData(lat, lng, `${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+                    }
+                });
+            });
+
+            // Get initial weather for Delhi
+            getWeatherData(28.6139, 77.2090, 'New Delhi, India');
+        }
+
+        // Fetch weather data from Visual Crossing API
+        async function getWeatherData(lat, lng, locationName) {
+            const weatherContent = document.getElementById('weatherContent');
+            weatherContent.innerHTML = '<div class="loading">⏳ Loading weather data...</div>';
+
+            // Update/add marker
+            if (currentWeatherMarker) {
+                currentWeatherMarker.setMap(null);
+            }
+
+            currentWeatherMarker = new google.maps.Marker({
+                position: { lat, lng },
+                map: map,
+                title: 'Weather Location',
+                icon: {
+                    url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+                        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
+                            <circle cx="20" cy="20" r="18" fill="#667eea" stroke="white" stroke-width="3"/>
+                            <text x="20" y="26" text-anchor="middle" fill="white" font-size="16">🌤️</text>
+                        </svg>
+                    `),
+                    scaledSize: new google.maps.Size(40, 40),
+                    anchor: new google.maps.Point(20, 20)
+                }
+            });
+
+            try {
+                // Current weather
+                const currentUrl = `${WEATHER_BASE_URL}/${lat},${lng}/today?unitGroup=metric&key=${WEATHER_API_KEY}&include=current`;
+                const currentResponse = await fetch(currentUrl);
+                const currentData = await currentResponse.json();
+
+                // 5-day forecast
+                const forecastUrl = `${WEATHER_BASE_URL}/${lat},${lng}?unitGroup=metric&key=${WEATHER_API_KEY}&include=days&elements=datetime,tempmax,tempmin,conditions,description,humidity,windspeed,precip`;
+                const forecastResponse = await fetch(forecastUrl);
+                const forecastData = await forecastResponse.json();
+
+                displayWeatherData(currentData, forecastData, locationName, lat, lng);
+            } catch (error) {
+                weatherContent.innerHTML = `
+                    <div class="error">
+                        ❌ Error loading weather data: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        // Display weather data in the panel
+        function displayWeatherData(currentData, forecastData, locationName, lat, lng) {
+            const weatherContent = document.getElementById('weatherContent');
+            
+            if (!currentData.currentConditions) {
+                weatherContent.innerHTML = '<div class="error">❌ No weather data available for this location</div>';
+                return;
+            }
+
+            const current = currentData.currentConditions;
+            const forecast = forecastData.days || [];
+
+            const html = `
+                <div class="weather-card">
+                    <div class="weather-title">
+                        🌤️ Current Weather
+                        <div style="font-size: 14px; font-weight: normal;">${locationName}</div>
+                    </div>
+                    <div class="weather-info">
+                        <div class="weather-item">🌡️ ${current.temp || 'N/A'}°C</div>
+                        <div class="weather-item">🤔 Feels ${current.feelslike || 'N/A'}°C</div>
+                        <div class="weather-item">☁️ ${current.conditions || 'N/A'}</div>
+                        <div class="weather-item">💧 ${current.humidity || 'N/A'}%</div>
+                        <div class="weather-item">💨 ${current.windspeed || 'N/A'} km/h</div>
+                        <div class="weather-item">👁️ ${current.visibility || 'N/A'} km</div>
+                    </div>
+                    <div class="coordinates">📍 ${lat.toFixed(4)}, ${lng.toFixed(4)}</div>
+                </div>
+
+                <div class="weather-card">
+                    <div class="weather-title">📅 5-Day Forecast</div>
+                    <div class="forecast-container">
+                        ${forecast.slice(0, 5).map((day, index) => `
+                            <div class="forecast-day">
+                                <div style="font-weight: bold; margin-bottom: 5px;">
+                                    ${index === 0 ? 'Today' : new Date(day.datetime).toLocaleDateString('en', { weekday: 'short', month: 'short', day: 'numeric' })}
+                                </div>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                    <span>🌡️ ${day.tempmax}° / ${day.tempmin}°</span>
+                                    <span>💧 ${day.humidity}%</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                    <span>☁️ ${day.conditions}</span>
+                                    <span>🌧️ ${day.precip}mm</span>
+                                </div>
+                                <div style="font-size: 12px; color: rgba(255,255,255,0.8);">
+                                    ${day.description}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+
+            weatherContent.innerHTML = html;
+        }
+
+        // Weather condition to emoji mapping
+        function getWeatherEmoji(condition) {
+            const conditions = {
+                'clear': '☀️',
+                'sunny': '☀️',
+                'partly cloudy': '⛅',
+                'cloudy': '☁️',
+                'overcast': '☁️',
+                'rain': '🌧️',
+                'drizzle': '🌦️',
+                'snow': '❄️',
+                'sleet': '🌨️',
+                'fog': '🌫️',
+                'wind': '💨',
+                'storm': '⛈️'
+            };
+
+            const lowerCondition = condition.toLowerCase();
+            for (const key in conditions) {
+                if (lowerCondition.includes(key)) {
+                    return conditions[key];
+                }
+            }
+            return '🌤️';
+        }
+
+        // Error handling for Google Maps API
+        window.gm_authFailure = function() {
+            document.getElementById('map').innerHTML = `
+                <div style="display: flex; justify-content: center; align-items: center; height: 100%; background: #f5f5f5;">
+                    <div style="text-align: center; color: #666;">
+                        <h3>❌ Google Maps API Error</h3>
+                        <p>Please check your API key and permissions</p>
+                    </div>
+                </div>
+            `;
+        };
+    </script>
+
+    <!-- Google Maps API -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAOVYRIgupAurZup5y1PRh8Ismb1A3lLao&libraries=places&callback=initMap" async defer></script>
+</body>
+</html>

@@ -1,0 +1,1391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Maharashtra AI Crop Forecasting System</title>
+    
+    <!-- CSS Libraries -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #2E7D32;
+            --secondary-color: #4CAF50;
+            --accent-color: #81C784;
+            --background-color: #F1F8E9;
+            --card-bg: #FFFFFF;
+            --text-primary: #1B5E20;
+            --text-secondary: #2E7D32;
+            --border-color: #C8E6C8;
+            --success-color: #4CAF50;
+            --warning-color: #FF9800;
+            --danger-color: #F44336;
+            --info-color: #2196F3;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--background-color) 0%, #E8F5E8 100%);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        /* Header Styles */
+        .header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            padding: 1.5rem 0;
+            box-shadow: 0 4px 12px rgba(46, 125, 50, 0.3);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 0;
+            text-align: center;
+        }
+
+        .header p {
+            text-align: center;
+            margin: 0.5rem 0 0 0;
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        /* Navigation */
+        .nav-tabs {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 0.5rem;
+            margin: 1rem 0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-tabs .nav-link {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-weight: 500;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-tabs .nav-link:hover {
+            background: var(--background-color);
+            color: var(--text-primary);
+        }
+
+        .nav-tabs .nav-link.active {
+            background: var(--secondary-color);
+            color: white;
+        }
+
+        /* Card Styles */
+        .card {
+            background: var(--card-bg);
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            margin-bottom: 1.5rem;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, var(--secondary-color), var(--accent-color));
+            color: white;
+            border-radius: 16px 16px 0 0 !important;
+            padding: 1rem 1.5rem;
+            border: none;
+            font-weight: 600;
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        /* Form Styles */
+        .form-control {
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.75rem;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 0.2rem rgba(76, 175, 80, 0.25);
+        }
+
+        .form-label {
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        /* Button Styles */
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #1B5E20, var(--primary-color));
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(46, 125, 50, 0.3);
+        }
+
+        .btn-outline-primary {
+            color: var(--secondary-color);
+            border: 2px solid var(--secondary-color);
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 500;
+        }
+
+        .btn-outline-primary:hover {
+            background: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+
+        /* Metric Cards */
+        .metric-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+        }
+
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-label {
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .metric-success { color: var(--success-color); }
+        .metric-warning { color: var(--warning-color); }
+        .metric-danger { color: var(--danger-color); }
+        .metric-info { color: var(--info-color); }
+
+        /* Alert Styles */
+        .alert {
+            border-radius: 12px;
+            border: none;
+            padding: 1rem 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .alert-success {
+            background: rgba(76, 175, 80, 0.1);
+            color: var(--success-color);
+            border-left: 4px solid var(--success-color);
+        }
+
+        .alert-warning {
+            background: rgba(255, 152, 0, 0.1);
+            color: var(--warning-color);
+            border-left: 4px solid var(--warning-color);
+        }
+
+        .alert-danger {
+            background: rgba(244, 67, 54, 0.1);
+            color: var(--danger-color);
+            border-left: 4px solid var(--danger-color);
+        }
+
+        .alert-info {
+            background: rgba(33, 150, 243, 0.1);
+            color: var(--info-color);
+            border-left: 4px solid var(--info-color);
+        }
+
+        /* Loading Spinner */
+        .loading {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .spinner-border {
+            color: var(--secondary-color);
+            width: 3rem;
+            height: 3rem;
+        }
+
+        /* Chart Container */
+        .chart-container {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 1rem;
+            margin: 1rem 0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        /* Progress Bars */
+        .progress {
+            height: 10px;
+            border-radius: 10px;
+            background: var(--background-color);
+        }
+
+        .progress-bar {
+            border-radius: 10px;
+        }
+
+        .progress-bar-success { background: var(--success-color); }
+        .progress-bar-warning { background: var(--warning-color); }
+        .progress-bar-danger { background: var(--danger-color); }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .card-body {
+                padding: 1rem;
+            }
+            
+            .metric-card {
+                padding: 1rem;
+            }
+            
+            .metric-value {
+                font-size: 2rem;
+            }
+        }
+
+        /* Status Indicators */
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+        }
+
+        .status-excellent { background-color: var(--success-color); }
+        .status-good { background-color: var(--info-color); }
+        .status-fair { background-color: var(--warning-color); }
+        .status-poor { background-color: var(--danger-color); }
+
+        /* Animation Classes */
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Image Upload Area */
+        .image-upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            background: var(--background-color);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .image-upload-area:hover {
+            border-color: var(--secondary-color);
+            background: rgba(76, 175, 80, 0.05);
+        }
+
+        .image-upload-area.dragover {
+            border-color: var(--secondary-color);
+            background: rgba(76, 175, 80, 0.1);
+        }
+
+        /* Recommendations List */
+        .recommendations-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .recommendations-list li {
+            background: var(--background-color);
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            border-left: 4px solid var(--secondary-color);
+        }
+
+        /* Weather Icons */
+        .weather-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .weather-clear { color: #FFC107; }
+        .weather-clouds { color: #6C757D; }
+        .weather-rain { color: #007BFF; }
+        .weather-storm { color: #6F42C1; }
+    </style>
+</head>
+
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="container">
+            <h1><i class="fas fa-seedling"></i> Advanced Maharashtra AI Crop Forecasting System</h1>
+            <p>Comprehensive Agricultural Intelligence Platform with Clean Analytics</p>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container-fluid px-4">
+        <!-- Navigation Tabs -->
+        <ul class="nav nav-tabs justify-content-center" id="mainTabs" role="tablist">
+            <li class="nav-item">
+                <button class="nav-link active" id="crop-analysis-tab" data-bs-toggle="tab" data-bs-target="#crop-analysis" type="button">
+                    <i class="fas fa-microscope me-2"></i>Crop Analysis
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" id="weather-tab" data-bs-toggle="tab" data-bs-target="#weather" type="button">
+                    <i class="fas fa-cloud-sun me-2"></i>Weather Intelligence
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" id="soil-tab" data-bs-toggle="tab" data-bs-target="#soil" type="button">
+                    <i class="fas fa-mountain me-2"></i>Soil Analysis
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" id="dashboard-tab" data-bs-toggle="tab" data-bs-target="#dashboard" type="button">
+                    <i class="fas fa-chart-line me-2"></i>Analytics Dashboard
+                </button>
+            </li>
+        </ul>
+
+        <!-- Tab Content -->
+        <div class="tab-content mt-4" id="mainTabContent">
+            
+            <!-- Crop Analysis Tab -->
+            <div class="tab-pane fade show active" id="crop-analysis" role="tabpanel">
+                <div class="row">
+                    <!-- Input Form -->
+                    <div class="col-lg-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-leaf me-2"></i>Crop Analysis Input</h5>
+                            </div>
+                            <div class="card-body">
+                                <form id="cropAnalysisForm" enctype="multipart/form-data">
+                                    <div class="mb-3">
+                                        <label for="district" class="form-label">District</label>
+                                        <select class="form-control" id="district" name="district" required>
+                                            <option value="Pune">Pune</option>
+                                            <option value="Mumbai">Mumbai</option>
+                                            <option value="Nashik">Nashik</option>
+                                            <option value="Nagpur">Nagpur</option>
+                                            <option value="Aurangabad">Aurangabad</option>
+                                            <option value="Kolhapur">Kolhapur</option>
+                                            <option value="Solapur">Solapur</option>
+                                            <option value="Ahmednagar">Ahmednagar</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="crop_type" class="form-label">Crop Type</label>
+                                        <select class="form-control" id="crop_type" name="crop_type" required>
+                                            <option value="Cotton">Cotton</option>
+                                            <option value="Tomato">Tomato</option>
+                                            <option value="Potato">Potato</option>
+                                            <option value="Rice">Rice</option>
+                                            <option value="Wheat">Wheat</option>
+                                            <option value="Sugarcane">Sugarcane</option>
+                                            <option value="Onion">Onion</option>
+                                            <option value="Soybean">Soybean</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="farm_area" class="form-label">Farm Area (hectares)</label>
+                                        <input type="number" class="form-control" id="farm_area" name="farm_area" 
+                                               min="0.1" max="1000" step="0.1" value="1.0" required>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">Environmental Factors</label>
+                                        <div class="row">
+                                            <div class="col-6">
+                                                <input type="number" class="form-control mb-2" name="temperature" 
+                                                       placeholder="Temperature (°C)" min="5" max="50" value="25">
+                                            </div>
+                                            <div class="col-6">
+                                                <input type="number" class="form-control mb-2" name="humidity" 
+                                                       placeholder="Humidity (%)" min="10" max="100" value="60">
+                                            </div>
+                                            <div class="col-6">
+                                                <input type="number" class="form-control mb-2" name="rainfall" 
+                                                       placeholder="Rainfall (mm)" min="0" max="500" value="10">
+                                            </div>
+                                            <div class="col-6">
+                                                <input type="number" class="form-control mb-2" name="soil_moisture" 
+                                                       placeholder="Soil Moisture (%)" min="0" max="100" value="50">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="crop_image" class="form-label">Upload Crop Image (Optional)</label>
+                                        <div class="image-upload-area" id="imageUploadArea">
+                                            <i class="fas fa-cloud-upload-alt fa-2x text-secondary mb-2"></i>
+                                            <p class="mb-0">Click or drag image here</p>
+                                            <input type="file" class="d-none" id="crop_image" name="crop_image" accept="image/*">
+                                        </div>
+                                    </div>
+
+                                    <button type="submit" class="btn btn-primary w-100">
+                                        <i class="fas fa-search me-2"></i>Analyze Crop
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Results Area -->
+                    <div class="col-lg-8">
+                        <div id="cropAnalysisResults">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Analysis Results</h5>
+                                </div>
+                                <div class="card-body text-center text-secondary">
+                                    <i class="fas fa-seedling fa-4x mb-3"></i>
+                                    <p>Upload crop image and environmental data to get comprehensive analysis</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="cropLoadingIndicator" class="d-none">
+                            <div class="loading">
+                                <div class="spinner-border" role="status"></div>
+                                <p class="mt-3">Analyzing crop data...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Weather Intelligence Tab -->
+            <div class="tab-pane fade" id="weather" role="tabpanel">
+                <div class="row">
+                    <div class="col-lg-3">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-map-marker-alt me-2"></i>Location</h5>
+                            </div>
+                            <div class="card-body">
+                                <select class="form-control mb-3" id="weatherDistrict">
+                                    <option value="Pune">Pune</option>
+                                    <option value="Mumbai">Mumbai</option>
+                                    <option value="Nashik">Nashik</option>
+                                    <option value="Nagpur">Nagpur</option>
+                                    <option value="Aurangabad">Aurangabad</option>
+                                    <option value="Kolhapur">Kolhapur</option>
+                                    <option value="Solapur">Solapur</option>
+                                    <option value="Ahmednagar">Ahmednagar</option>
+                                </select>
+                                <button class="btn btn-outline-primary w-100" onclick="loadWeatherData()">
+                                    <i class="fas fa-sync-alt me-2"></i>Update Weather
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Current Weather Card -->
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-thermometer-half me-2"></i>Current Weather</h5>
+                            </div>
+                            <div class="card-body" id="currentWeatherCard">
+                                <div class="text-center">
+                                    <i class="fas fa-sun weather-icon weather-clear"></i>
+                                    <div class="metric-value metric-info">--°C</div>
+                                    <p class="text-secondary">Loading weather data...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-9">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>Weather Trends & Analysis</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="weatherChartsContainer">
+                                    <div class="chart-container">
+                                        <div id="weatherGraphs" style="height: 600px;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Agricultural Impact Analysis -->
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-tractor me-2"></i>Agricultural Impact Analysis</h5>
+                            </div>
+                            <div class="card-body" id="agriculturealImpactAnalysis">
+                                <div class="row text-center">
+                                    <div class="col-md-3">
+                                        <div class="metric-card">
+                                            <div class="metric-value metric-info">--</div>
+                                            <div class="metric-label">Temperature Impact</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="metric-card">
+                                            <div class="metric-value metric-success">--</div>
+                                            <div class="metric-label">Humidity Impact</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="metric-card">
+                                            <div class="metric-value metric-warning">--</div>
+                                            <div class="metric-label">Rainfall Impact</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="metric-card">
+                                            <div class="metric-value metric-success">--</div>
+                                            <div class="metric-label">Overall Rating</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Soil Analysis Tab -->
+            <div class="tab-pane fade" id="soil" role="tabpanel">
+                <div class="row">
+                    <div class="col-lg-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-vial me-2"></i>Soil Parameters Input</h5>
+                            </div>
+                            <div class="card-body">
+                                <form id="soilAnalysisForm">
+                                    <div class="mb-3">
+                                        <label for="nitrogen" class="form-label">Nitrogen (kg/ha)</label>
+                                        <input type="number" class="form-control" id="nitrogen" name="nitrogen" 
+                                               min="0" max="300" value="50" required>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="phosphorus" class="form-label">Phosphorus (kg/ha)</label>
+                                        <input type="number" class="form-control" id="phosphorus" name="phosphorus" 
+                                               min="0" max="150" value="30" required>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="potassium" class="form-label">Potassium (kg/ha)</label>
+                                        <input type="number" class="form-control" id="potassium" name="potassium" 
+                                               min="0" max="400" value="40" required>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="ph" class="form-label">pH Level</label>
+                                        <input type="number" class="form-control" id="ph" name="ph" 
+                                               min="3" max="10" step="0.1" value="6.5" required>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="organic_matter" class="form-label">Organic Matter (%)</label>
+                                        <input type="number" class="form-control" id="organic_matter" name="organic_matter" 
+                                               min="0" max="10" step="0.1" value="2.5" required>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="electrical_conductivity" class="form-label">Electrical Conductivity (dS/m)</label>
+                                        <input type="number" class="form-control" id="electrical_conductivity" name="electrical_conductivity" 
+                                               min="0" max="5" step="0.1" value="1.2" required>
+                                    </div>
+
+                                    <button type="submit" class="btn btn-primary w-100">
+                                        <i class="fas fa-flask me-2"></i>Analyze Soil
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-8">
+                        <div id="soilAnalysisResults">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Soil Health Analysis</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div id="soilGraphsContainer">
+                                        <div class="chart-container">
+                                            <div id="soilGraphs" style="height: 700px;"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="soilLoadingIndicator" class="d-none">
+                            <div class="loading">
+                                <div class="spinner-border" role="status"></div>
+                                <p class="mt-3">Analyzing soil composition...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analytics Dashboard Tab -->
+            <div class="tab-pane fade" id="dashboard" role="tabpanel">
+                <div class="row">
+                    <!-- Key Metrics -->
+                    <div class="col-12">
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>System Overview</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row text-center">
+                                    <div class="col-md-3">
+                                        <div class="metric-card">
+                                            <div class="metric-value metric-success" id="systemHealthScore">98%</div>
+                                            <div class="metric-label">System Health</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="metric-card">
+                                            <div class="metric-value metric-info" id="analysisCount">1,247</div>
+                                            <div class="metric-label">Total Analyses</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="metric-card">
+                                            <div class="metric-value metric-warning" id="activeAlerts">3</div>
+                                            <div class="metric-label">Active Alerts</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="metric-card">
+                                            <div class="metric-value metric-success" id="accuracyRate">94.2%</div>
+                                            <div class="metric-label">Prediction Accuracy</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Activity -->
+                    <div class="col-lg-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-history me-2"></i>Recent Activity</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="list-group list-group-flush">
+                                    <div class="list-group-item d-flex align-items-center">
+                                        <span class="status-indicator status-excellent"></span>
+                                        <div class="flex-grow-1">
+                                            <strong>Crop Analysis</strong> - Pune District
+                                            <br><small class="text-muted">Cotton health assessment - 2 minutes ago</small>
+                                        </div>
+                                    </div>
+                                    <div class="list-group-item d-flex align-items-center">
+                                        <span class="status-indicator status-good"></span>
+                                        <div class="flex-grow-1">
+                                            <strong>Weather Update</strong> - Mumbai
+                                            <br><small class="text-muted">Meteorological data updated - 5 minutes ago</small>
+                                        </div>
+                                    </div>
+                                    <div class="list-group-item d-flex align-items-center">
+                                        <span class="status-indicator status-fair"></span>
+                                        <div class="flex-grow-1">
+                                            <strong>Soil Analysis</strong> - Nashik
+                                            <br><small class="text-muted">pH levels analyzed - 12 minutes ago</small>
+                                        </div>
+                                    </div>
+                                    <div class="list-group-item d-flex align-items-center">
+                                        <span class="status-indicator status-excellent"></span>
+                                        <div class="flex-grow-1">
+                                            <strong>Disease Detection</strong> - Nagpur
+                                            <br><small class="text-muted">Early blight identified - 18 minutes ago</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- System Status -->
+                    <div class="col-lg-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-server me-2"></i>System Status</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <span>AI Models Performance</span>
+                                        <span class="badge bg-success">Excellent</span>
+                                    </div>
+                                    <div class="progress">
+                                        <div class="progress-bar progress-bar-success" style="width: 98%"></div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <span>Data Processing</span>
+                                        <span class="badge bg-info">Good</span>
+                                    </div>
+                                    <div class="progress">
+                                        <div class="progress-bar bg-info" style="width: 87%"></div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <span>Weather API Status</span>
+                                        <span class="badge bg-success">Online</span>
+                                    </div>
+                                    <div class="progress">
+                                        <div class="progress-bar progress-bar-success" style="width: 100%"></div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <span>Database Performance</span>
+                                        <span class="badge bg-warning">Fair</span>
+                                    </div>
+                                    <div class="progress">
+                                        <div class="progress-bar progress-bar-warning" style="width: 76%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Alerts & Notifications -->
+                    <div class="col-12 mt-3">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-bell me-2"></i>Alerts & Recommendations</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    <strong>Weather Alert:</strong> Heavy rainfall expected in Pune district. Monitor for waterlogging in low-lying areas.
+                                </div>
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    <strong>System Update:</strong> New disease detection models available. System will auto-update during next maintenance window.
+                                </div>
+                                <div class="alert alert-success">
+                                    <i class="fas fa-check-circle me-2"></i>
+                                    <strong>Performance:</strong> Crop analysis accuracy has improved by 3.2% this month with new AI optimizations.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <script>
+        // Global variables
+        let currentWeatherData = null;
+        let currentSoilData = null;
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeDashboard();
+            setupEventListeners();
+            loadInitialData();
+        });
+
+        function initializeDashboard() {
+            console.log('🌱 Advanced Maharashtra AI Crop Forecasting System initialized');
+            
+            // Add fade-in animation to all cards
+            const cards = document.querySelectorAll('.card');
+            cards.forEach((card, index) => {
+                setTimeout(() => {
+                    card.classList.add('fade-in');
+                }, index * 100);
+            });
+        }
+
+        function setupEventListeners() {
+            // Crop Analysis Form
+            const cropForm = document.getElementById('cropAnalysisForm');
+            if (cropForm) {
+                cropForm.addEventListener('submit', handleCropAnalysis);
+            }
+
+            // Soil Analysis Form
+            const soilForm = document.getElementById('soilAnalysisForm');
+            if (soilForm) {
+                soilForm.addEventListener('submit', handleSoilAnalysis);
+            }
+
+            // Image upload area
+            const imageUploadArea = document.getElementById('imageUploadArea');
+            const imageInput = document.getElementById('crop_image');
+            
+            if (imageUploadArea && imageInput) {
+                imageUploadArea.addEventListener('click', () => imageInput.click());
+                
+                // Drag and drop functionality
+                imageUploadArea.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    imageUploadArea.classList.add('dragover');
+                });
+                
+                imageUploadArea.addEventListener('dragleave', () => {
+                    imageUploadArea.classList.remove('dragover');
+                });
+                
+                imageUploadArea.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    imageUploadArea.classList.remove('dragover');
+                    const files = e.dataTransfer.files;
+                    if (files.length > 0 && files[0].type.startsWith('image/')) {
+                        imageInput.files = files;
+                        updateImageUploadDisplay(files[0]);
+                    }
+                });
+
+                imageInput.addEventListener('change', (e) => {
+                    if (e.target.files.length > 0) {
+                        updateImageUploadDisplay(e.target.files[0]);
+                    }
+                });
+            }
+
+            // Tab change event
+            const tabButtons = document.querySelectorAll('[data-bs-toggle="tab"]');
+            tabButtons.forEach(button => {
+                button.addEventListener('shown.bs.tab', handleTabChange);
+            });
+        }
+
+        function loadInitialData() {
+            // Load weather data for default district
+            loadWeatherData();
+            
+            // Load soil analysis with default values
+            loadSoilAnalysis();
+        }
+
+        function updateImageUploadDisplay(file) {
+            const uploadArea = document.getElementById('imageUploadArea');
+            uploadArea.innerHTML = `
+                <i class="fas fa-image fa-2x text-success mb-2"></i>
+                <p class="mb-0 text-success"><strong>Image Selected:</strong> ${file.name}</p>
+                <p class="mb-0 small text-muted">${(file.size / 1024 / 1024).toFixed(2)} MB</p>
+            `;
+        }
+
+        async function handleCropAnalysis(e) {
+            e.preventDefault();
+            
+            const loadingIndicator = document.getElementById('cropLoadingIndicator');
+            const resultsDiv = document.getElementById('cropAnalysisResults');
+            
+            // Show loading
+            loadingIndicator.classList.remove('d-none');
+            resultsDiv.classList.add('d-none');
+            
+            try {
+                const formData = new FormData(e.target);
+                
+                const response = await fetch('/api/crop_analysis', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    displayCropAnalysisResults(result);
+                } else {
+                    showError('Crop analysis failed: ' + result.message);
+                }
+                
+            } catch (error) {
+                console.error('Crop analysis error:', error);
+                showError('Failed to analyze crop data. Please try again.');
+            } finally {
+                loadingIndicator.classList.add('d-none');
+                resultsDiv.classList.remove('d-none');
+            }
+        }
+
+        function displayCropAnalysisResults(data) {
+            const resultsDiv = document.getElementById('cropAnalysisResults');
+            
+            let resultsHTML = `
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Analysis Results - ${data.district}</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="metric-card">
+                                    <div class="metric-value metric-info">${data.crop_type}</div>
+                                    <div class="metric-label">Crop Type</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="metric-card">
+                                    <div class="metric-value metric-success">${data.farm_area} ha</div>
+                                    <div class="metric-label">Farm Area</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="metric-card">
+                                    <div class="metric-value metric-warning">${data.environmental_factors.temperature}°C</div>
+                                    <div class="metric-label">Temperature</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Image analysis results
+            if (data.image_analysis) {
+                const imageAnalysis = data.image_analysis;
+                resultsHTML += `
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-microscope me-2"></i>Image Analysis Results</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6>Disease Detection</h6>
+                                    <p><strong>Disease:</strong> ${imageAnalysis.disease_detection.disease}</p>
+                                    <p><strong>Confidence:</strong> ${imageAnalysis.disease_detection.confidence.toFixed(1)}%</p>
+                                    
+                                    <h6 class="mt-3">NDVI Analysis</h6>
+                                    <p><strong>NDVI Value:</strong> ${imageAnalysis.ndvi_analysis.ndvi_value.toFixed(3)}</p>
+                                    <p><strong>Health Status:</strong> ${imageAnalysis.ndvi_analysis.vegetation_health}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>Health Score</h6>
+                                    <div class="metric-card">
+                                        <div class="metric-value ${imageAnalysis.health_score > 70 ? 'metric-success' : imageAnalysis.health_score > 50 ? 'metric-warning' : 'metric-danger'}">${imageAnalysis.health_score}</div>
+                                        <div class="metric-label">Overall Health Score</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <h6 class="mt-3">Recommendations</h6>
+                            <ul class="recommendations-list">
+                                ${imageAnalysis.recommendations.map(rec => `<li>${rec}</li>`).join('')}
+                            </ul>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Weather analysis summary
+            if (data.weather_analysis && data.weather_analysis.agricultural_analysis) {
+                const agriAnalysis = data.weather_analysis.agricultural_analysis;
+                resultsHTML += `
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-cloud-sun me-2"></i>Weather Impact Analysis</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row text-center">
+                                <div class="col-md-3">
+                                    <div class="metric-card">
+                                        <div class="metric-value metric-info">${agriAnalysis.temperature_impact}</div>
+                                        <div class="metric-label">Temperature</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="metric-card">
+                                        <div class="metric-value metric-success">${agriAnalysis.humidity_impact}</div>
+                                        <div class="metric-label">Humidity</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="metric-card">
+                                        <div class="metric-value metric-warning">${agriAnalysis.rainfall_impact}</div>
+                                        <div class="metric-label">Rainfall</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="metric-card">
+                                        <div class="metric-value metric-success">${agriAnalysis.overall_rating}</div>
+                                        <div class="metric-label">Overall Rating</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <h6 class="mt-3">Crop Activities Recommended</h6>
+                            <ul class="recommendations-list">
+                                ${agriAnalysis.crop_activities.map(activity => `<li>${activity}</li>`).join('')}
+                            </ul>
+                        </div>
+                    </div>
+                `;
+            }
+
+            resultsDiv.innerHTML = resultsHTML;
+        }
+
+        async function loadWeatherData() {
+            const district = document.getElementById('weatherDistrict').value;
+            
+            try {
+                const response = await fetch(`/api/weather_analysis/${district}`);
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    currentWeatherData = result.data;
+                    updateCurrentWeatherDisplay(result.data.current);
+                    await loadWeatherGraphs(district);
+                    updateAgriculturalImpactDisplay(result.data.agricultural_analysis);
+                } else {
+                    showError('Failed to load weather data: ' + result.message);
+                }
+                
+            } catch (error) {
+                console.error('Weather data error:', error);
+                showError('Failed to load weather data. Please try again.');
+            }
+        }
+
+        function updateCurrentWeatherDisplay(currentWeather) {
+            const currentWeatherCard = document.getElementById('currentWeatherCard');
+            
+            // Determine weather icon
+            let iconClass = 'fas fa-sun weather-clear';
+            if (currentWeather.description.includes('cloud')) {
+                iconClass = 'fas fa-cloud weather-clouds';
+            } else if (currentWeather.description.includes('rain')) {
+                iconClass = 'fas fa-cloud-rain weather-rain';
+            } else if (currentWeather.description.includes('storm')) {
+                iconClass = 'fas fa-bolt weather-storm';
+            }
+            
+            currentWeatherCard.innerHTML = `
+                <div class="text-center">
+                    <i class="${iconClass}"></i>
+                    <div class="metric-value metric-info">${currentWeather.temperature.toFixed(1)}°C</div>
+                    <p class="text-secondary">${currentWeather.description}</p>
+                    <div class="row small">
+                        <div class="col-6">Humidity: ${currentWeather.humidity}%</div>
+                        <div class="col-6">Wind: ${currentWeather.wind_speed.toFixed(1)} m/s</div>
+                        <div class="col-6">Pressure: ${currentWeather.pressure.toFixed(0)} hPa</div>
+                        <div class="col-6">Visibility: ${currentWeather.visibility.toFixed(1)} km</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function updateAgriculturalImpactDisplay(agriAnalysis) {
+            const impactDiv = document.getElementById('agriculturealImpactAnalysis');
+            
+            impactDiv.innerHTML = `
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <div class="metric-value metric-info">${agriAnalysis.temperature_impact}</div>
+                            <div class="metric-label">Temperature Impact</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <div class="metric-value metric-success">${agriAnalysis.humidity_impact}</div>
+                            <div class="metric-label">Humidity Impact</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <div class="metric-value metric-warning">${agriAnalysis.rainfall_impact}</div>
+                            <div class="metric-label">Rainfall Impact</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <div class="metric-value metric-success">${agriAnalysis.overall_rating}</div>
+                            <div class="metric-label">Overall Rating</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-3">
+                    <h6>Recommended Activities:</h6>
+                    <ul class="recommendations-list">
+                        ${agriAnalysis.crop_activities.map(activity => `<li>${activity}</li>`).join('')}
+                    </ul>
+                </div>
+                
+                ${agriAnalysis.stress_indicators && agriAnalysis.stress_indicators.length > 0 ? `
+                    <div class="mt-3">
+                        <h6>Stress Indicators:</h6>
+                        <div class="alert alert-warning">
+                            <ul class="mb-0">
+                                ${agriAnalysis.stress_indicators.map(stress => `<li>${stress}</li>`).join('')}
+                            </ul>
+                        </div>
+                    </div>
+                ` : ''}
+            `;
+        }
+
+        async function loadWeatherGraphs(district) {
+            try {
+                const response = await fetch(`/api/weather_graphs/${district}`);
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    const graphData = JSON.parse(result.graph);
+                    Plotly.newPlot('weatherGraphs', graphData.data, graphData.layout, {
+                        responsive: true,
+                        displayModeBar: false
+                    });
+                } else {
+                    showError('Failed to load weather graphs: ' + result.message);
+                }
+                
+            } catch (error) {
+                console.error('Weather graphs error:', error);
+                showError('Failed to load weather graphs. Please try again.');
+            }
+        }
+
+        async function handleSoilAnalysis(e) {
+            e.preventDefault();
+            
+            const loadingIndicator = document.getElementById('soilLoadingIndicator');
+            const resultsDiv = document.getElementById('soilAnalysisResults');
+            
+            // Show loading
+            if (loadingIndicator) {
+                loadingIndicator.classList.remove('d-none');
+            }
+            
+            try {
+                const formData = new FormData(e.target);
+                const soilData = {
+                    nitrogen: parseFloat(formData.get('nitrogen')),
+                    phosphorus: parseFloat(formData.get('phosphorus')),
+                    potassium: parseFloat(formData.get('potassium')),
+                    ph: parseFloat(formData.get('ph')),
+                    organic_matter: parseFloat(formData.get('organic_matter')),
+                    electrical_conductivity: parseFloat(formData.get('electrical_conductivity'))
+                };
+                
+                // Store current soil data
+                currentSoilData = soilData;
+                
+                // Load soil graphs
+                await loadSoilGraphs(soilData);
+                
+            } catch (error) {
+                console.error('Soil analysis error:', error);
+                showError('Failed to analyze soil data. Please try again.');
+            } finally {
+                if (loadingIndicator) {
+                    loadingIndicator.classList.add('d-none');
+                }
+            }
+        }
+
+        async function loadSoilAnalysis() {
+            const defaultSoilData = {
+                nitrogen: 50,
+                phosphorus: 30,
+                potassium: 40,
+                ph: 6.5,
+                organic_matter: 2.5,
+                electrical_conductivity: 1.2
+            };
+            
+            currentSoilData = defaultSoilData;
+            await loadSoilGraphs(defaultSoilData);
+        }
+
+        async function loadSoilGraphs(soilData) {
+            try {
+                const response = await fetch('/api/soil_graphs', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(soilData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    const graphData = JSON.parse(result.graph);
+                    Plotly.newPlot('soilGraphs', graphData.data, graphData.layout, {
+                        responsive: true,
+                        displayModeBar: false
+                    });
+                    
+                    // Update soil analysis summary if available
+                    if (result.analysis) {
+                        updateSoilAnalysisSummary(result.analysis);
+                    }
+                } else {
+                    showError('Failed to load soil graphs: ' + result.message);
+                }
+                
+            } catch (error) {
+                console.error('Soil graphs error:', error);
+                showError('Failed to load soil graphs. Please try again.');
+            }
+        }
+
+        function updateSoilAnalysisSummary(analysis) {
+            // This function can be extended to show additional soil analysis details
+            console.log('Soil analysis updated:', analysis);
+        }
+
+        function handleTabChange(e) {
+            const targetTab = e.target.getAttribute('data-bs-target');
+            
+            // Load data when switching to specific tabs
+            if (targetTab === '#weather' && !currentWeatherData) {
+                loadWeatherData();
+            } else if (targetTab === '#soil' && !currentSoilData) {
+                loadSoilAnalysis();
+            }
+        }
+
+        function showError(message) {
+            // Create and show error alert
+            const alertHTML = `
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            
+            // Find a container to show the alert
+            const container = document.querySelector('.container-fluid');
+            if (container) {
+                const alertDiv = document.createElement('div');
+                alertDiv.innerHTML = alertHTML;
+                container.insertBefore(alertDiv.firstElementChild, container.firstElementChild);
+                
+                // Auto-remove after 5 seconds
+                setTimeout(() => {
+                    const alert = container.querySelector('.alert-danger');
+                    if (alert) {
+                        alert.remove();
+                    }
+                }, 5000);
+            }
+        }
+
+        function showSuccess(message) {
+            // Create and show success alert
+            const alertHTML = `
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="fas fa-check-circle me-2"></i>
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            
+            const container = document.querySelector('.container-fluid');
+            if (container) {
+                const alertDiv = document.createElement('div');
+                alertDiv.innerHTML = alertHTML;
+                container.insertBefore(alertDiv.firstElementChild, container.firstElementChild);
+                
+                // Auto-remove after 3 seconds
+                setTimeout(() => {
+                    const alert = container.querySelector('.alert-success');
+                    if (alert) {
+                        alert.remove();
+                    }
+                }, 3000);
+            }
+        }
+
+        // Utility functions
+        function formatNumber(num, decimals = 1) {
+            return Number(num).toFixed(decimals);
+        }
+
+        function formatDate(dateString) {
+            return new Date(dateString).toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric'
+            });
+        }
+
+        function getMetricClass(value, thresholds) {
+            if (value >= thresholds.excellent) return 'metric-success';
+            if (value >= thresholds.good) return 'metric-info';
+            if (value >= thresholds.fair) return 'metric-warning';
+            return 'metric-danger';
+        }
+
+        // Export functions for global access
+        window.loadWeatherData = loadWeatherData;
+        window.showError = showError;
+        window.showSuccess = showSuccess;
+    </script>
+</body>
+</html>

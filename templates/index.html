@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌱 Plant Disease Detection AI</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <style>
+        :root {
+            --primary-green: #2d5016;
+            --secondary-green: #4a7c59;
+            --accent-green: #7fb069;
+            --light-green: #a7c957;
+            --bg-green: #f1f8e9;
+            --text-dark: #1b5e20;
+            --success-green: #388e3c;
+            --warning-orange: #f57c00;
+            --danger-red: #d32f2f;
+            --gradient-primary: linear-gradient(135deg, #2d5016 0%, #4a7c59 50%, #7fb069 100%);
+            --shadow-light: 0 4px 20px rgba(45, 80, 22, 0.1);
+            --shadow-medium: 0 8px 30px rgba(45, 80, 22, 0.15);
+            --shadow-heavy: 0 12px 40px rgba(45, 80, 22, 0.2);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--bg-green) 0%, #e8f5e8 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: var(--text-dark);
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+
+        *:focus {
+            outline: 3px solid var(--accent-green);
+            outline-offset: 2px;
+        }
+
+        button:focus {
+            outline: 3px solid var(--accent-green);
+            outline-offset: 3px;
+        }
+
+        .hero-section {
+            background: linear-gradient(rgba(45, 80, 22, 0.8), rgba(45, 80, 22, 0.8)), 
+                        url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600"><defs><pattern id="plant" patternUnits="userSpaceOnUse" width="40" height="40"><circle cx="20" cy="20" r="2" fill="%23ffffff" opacity="0.1"/></pattern></defs><rect width="1200" height="600" fill="url(%23plant)"/></svg>');
+            color: white;
+            padding: 4rem 0;
+            text-align: center;
+        }
+
+        .hero-title {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .hero-subtitle {
+            font-size: 1.3rem;
+            opacity: 0.9;
+            margin-bottom: 2rem;
+        }
+
+        .upload-section {
+            background: white;
+            border-radius: 20px;
+            padding: 3rem;
+            box-shadow: 0 10px 30px rgba(45, 80, 22, 0.1);
+            margin: -2rem auto 3rem;
+            max-width: 800px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .upload-area {
+            border: 3px dashed var(--accent-green);
+            border-radius: 15px;
+            padding: 3rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            background: linear-gradient(45deg, #f8fdf8 0%, #ffffff 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-area:hover {
+            border-color: var(--secondary-green);
+            background: linear-gradient(45deg, #f0f8f0 0%, #fafff8 100%);
+            transform: translateY(-2px);
+        }
+
+        .upload-area.dragover {
+            border-color: var(--success-green);
+            background: linear-gradient(45deg, #e8f5e8 0%, #f0fff0 100%);
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 4rem;
+            color: var(--accent-green);
+            margin-bottom: 1rem;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+
+        .upload-text {
+            font-size: 1.2rem;
+            color: var(--secondary-green);
+            margin-bottom: 1rem;
+        }
+
+        .btn-upload {
+            background: var(--gradient-primary);
+            border: none;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: var(--shadow-medium);
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            min-width: 200px;
+        }
+
+        .btn-upload:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .btn-upload:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: var(--shadow-heavy);
+            background: linear-gradient(135deg, #4a7c59 0%, #7fb069 50%, #a7c957 100%);
+        }
+
+        .btn-upload:hover:before {
+            left: 100%;
+        }
+
+        .btn-upload:active {
+            transform: translateY(-1px) scale(1.02);
+            transition: all 0.1s ease;
+        }
+
+        .btn-upload:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-submit {
+            background: var(--gradient-primary);
+            border: none;
+            color: white;
+            padding: 18px 40px;
+            border-radius: 60px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: var(--shadow-medium);
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            min-width: 220px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-submit:before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.6s ease, height 0.6s ease;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-4px) scale(1.08);
+            box-shadow: 0 15px 50px rgba(45, 80, 22, 0.3);
+            background: linear-gradient(135deg, #4a7c59 0%, #7fb069 50%, #a7c957 100%);
+        }
+
+        .btn-submit:hover:before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn-submit:active {
+            transform: translateY(-2px) scale(1.05);
+            transition: all 0.1s ease;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 3rem;
+            background: white;
+            border-radius: 20px;
+            margin-top: 2rem;
+            box-shadow: var(--shadow-light);
+            animation: slideInUp 0.5s ease-out;
+        }
+
+        .loading-spinner {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 2rem;
+            position: relative;
+        }
+
+        .loading-spinner::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 6px solid var(--bg-green);
+            border-top: 6px solid var(--secondary-green);
+            border-right: 6px solid var(--accent-green);
+            border-radius: 50%;
+            animation: spin 1.2s linear infinite;
+        }
+
+        .loading-spinner::after {
+            content: '';
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            width: 50px;
+            height: 50px;
+            border: 4px solid transparent;
+            border-top: 4px solid var(--light-green);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite reverse;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            font-size: 1.3rem;
+            color: var(--secondary-green);
+            font-weight: 600;
+            margin-bottom: 1rem;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .loading-dots {
+            display: inline-block;
+            animation: loadingDots 1.5s infinite;
+        }
+
+        @keyframes loadingDots {
+            0%, 20% { opacity: 0; }
+            50% { opacity: 1; }
+            80%, 100% { opacity: 0; }
+        }
+
+        .loading-progress {
+            width: 100%;
+            height: 6px;
+            background: var(--bg-green);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 1rem;
+        }
+
+        .loading-progress-bar {
+            height: 100%;
+            background: var(--gradient-primary);
+            border-radius: 10px;
+            animation: loadingProgress 3s ease-in-out infinite;
+        }
+
+        @keyframes loadingProgress {
+            0% { width: 0%; transform: translateX(-100%); }
+            50% { width: 100%; transform: translateX(0%); }
+            100% { width: 100%; transform: translateX(100%); }
+        }
+
+        .results-section {
+            display: none;
+            background: white;
+            border-radius: 20px;
+            padding: 3rem;
+            margin-top: 2rem;
+            box-shadow: var(--shadow-medium);
+            animation: slideInUp 0.6s ease-out;
+            border: 1px solid rgba(45, 80, 22, 0.1);
+        }
+
+        @keyframes slideInUp {
+            0% {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideInDown {
+            0% {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            0% {
+                opacity: 0;
+            }
+            100% {
+                opacity: 1;
+            }
+        }
+
+        @keyframes scaleIn {
+            0% {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .result-image {
+            max-width: 100%;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            margin-bottom: 2rem;
+        }
+
+        .status-healthy {
+            color: var(--success-green);
+            background: linear-gradient(45deg, #e8f5e9, #f1f8e9);
+            padding: 1rem;
+            border-radius: 10px;
+            border-left: 5px solid var(--success-green);
+        }
+
+        .status-diseased {
+            color: var(--danger-red);
+            background: linear-gradient(45deg, #ffebee, #fce4ec);
+            padding: 1rem;
+            border-radius: 10px;
+            border-left: 5px solid var(--danger-red);
+        }
+
+        .probability-bars {
+            margin-top: 2rem;
+        }
+
+        .probability-item {
+            margin-bottom: 1rem;
+            padding: 0.5rem;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .progress {
+            height: 25px;
+            border-radius: 15px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            border-radius: 15px;
+            transition: width 1s ease-in-out;
+        }
+
+        .recommendations {
+            background: linear-gradient(45deg, #e3f2fd, #f3e5f5);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .feature-grid {
+            padding: 4rem 0;
+        }
+
+        .feature-card {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            height: 100%;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            color: var(--secondary-green);
+            margin-bottom: 1rem;
+        }
+
+        .footer {
+            background: var(--primary-green);
+            color: white;
+            padding: 2rem 0;
+            text-align: center;
+        }
+
+        .health-score {
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 1rem 0;
+        }
+
+        .error-message {
+            color: var(--danger-red);
+            background: #ffebee;
+            padding: 1rem;
+            border-radius: 10px;
+            border-left: 5px solid var(--danger-red);
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .supported-formats {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 1rem;
+        }
+
+        .file-preview {
+            margin-top: 2rem;
+            padding: 2rem;
+            border: 2px dashed var(--accent-green);
+            border-radius: 15px;
+            background: linear-gradient(45deg, #f8fdf8 0%, #ffffff 100%);
+            animation: slideInDown 0.5s ease-out;
+        }
+
+        .preview-content {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .preview-image {
+            width: 120px;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 15px;
+            box-shadow: var(--shadow-light);
+            animation: scaleIn 0.5s ease-out;
+        }
+
+        .file-info {
+            flex: 1;
+        }
+
+        .file-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .file-size {
+            font-size: 0.9rem;
+            color: var(--secondary-green);
+        }
+
+        .preview-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(45deg, #6c757d, #adb5bd);
+            border: none;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
+            cursor: pointer;
+            min-width: 150px;
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 8px 25px rgba(108, 117, 125, 0.4);
+            background: linear-gradient(45deg, #5a6268, #95a5a6);
+        }
+
+        .upload-actions {
+            margin: 2rem 0;
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .shake {
+            animation: shake 0.5s;
+        }
+
+        @keyframes shake {
+            0%, 100% {
+                transform: translateX(0);
+            }
+            10%, 30%, 50%, 70%, 90% {
+                transform: translateX(-5px);
+            }
+            20%, 40%, 60%, 80% {
+                transform: translateX(5px);
+            }
+        }
+
+        .fade-in-up {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            0% {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result-card {
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        .probability-item {
+            animation: fadeInUp 0.6s ease-out;
+            animation-fill-mode: both;
+        }
+
+        .probability-item:nth-child(1) { animation-delay: 0.1s; }
+        .probability-item:nth-child(2) { animation-delay: 0.2s; }
+        .probability-item:nth-child(3) { animation-delay: 0.3s; }
+        .probability-item:nth-child(4) { animation-delay: 0.4s; }
+
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 2.5rem;
+            }
+            .upload-section {
+                margin: -1rem 1rem 2rem;
+                padding: 2rem;
+            }
+            .upload-area {
+                padding: 2rem 1rem;
+            }
+            .preview-content {
+                flex-direction: column;
+                text-align: center;
+            }
+            .preview-actions {
+                flex-direction: column;
+            }
+            .btn-submit, .btn-secondary {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="container">
+            <h1 class="hero-title">🌱 Plant Disease Detection AI</h1>
+            <p class="hero-subtitle">
+                Advanced AI-powered plant health analysis to detect diseases and stress in your crops
+            </p>
+        </div>
+    </section>
+
+    <!-- Upload Section -->
+    <div class="container">
+        <div class="upload-section">
+            <h2 class="text-center mb-4" style="color: var(--primary-green);">
+                <i class="fas fa-leaf"></i> Upload Plant Image for Analysis
+            </h2>
+            
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                </div>
+                <div class="upload-text">
+                    <strong>Drag & drop your plant image here</strong><br>
+                    or select an image to analyze
+                </div>
+                
+                <!-- File Selection -->
+                <div class="upload-actions">
+                    <button class="btn btn-upload" id="browseBtn" onclick="document.getElementById('fileInput').click()">
+                        <i class="fas fa-folder-open"></i> Browse Files
+                    </button>
+                    <input type="file" id="fileInput" accept="image/*" style="display: none;">
+                </div>
+
+                <!-- Selected File Preview -->
+                <div class="file-preview" id="filePreview" style="display: none;">
+                    <div class="preview-content">
+                        <img id="previewImage" class="preview-image" src="" alt="Selected image">
+                        <div class="file-info">
+                            <div class="file-name" id="fileName">No file selected</div>
+                            <div class="file-size" id="fileSize"></div>
+                        </div>
+                    </div>
+                    <div class="preview-actions">
+                        <button class="btn btn-submit" id="submitBtn" onclick="analyzeImage()">
+                            <i class="fas fa-microscope"></i> Analyze Plant
+                        </button>
+                        <button class="btn btn-secondary" onclick="clearSelection()">
+                            <i class="fas fa-times"></i> Clear
+                        </button>
+                    </div>
+                </div>
+
+                <div class="supported-formats">
+                    <i class="fas fa-info-circle"></i>
+                    Supported formats: JPG, PNG, GIF, BMP, TIFF, WebP (Max: 16MB)
+                </div>
+            </div>
+
+            <!-- Loading Section -->
+            <div class="loading" id="loadingSection">
+                <div class="loading-spinner"></div>
+                <div class="loading-text">
+                    <i class="fas fa-microscope"></i> Analyzing your plant<span class="loading-dots">...</span>
+                </div>
+                <p>Our AI is examining the image for signs of disease or stress</p>
+                <div class="loading-progress">
+                    <div class="loading-progress-bar"></div>
+                </div>
+            </div>
+
+            <!-- Error Section -->
+            <div class="error-message" id="errorMessage">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span id="errorText"></span>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div class="results-section" id="resultsSection">
+            <div class="row">
+                <div class="col-md-6">
+                    <h3><i class="fas fa-image"></i> Analyzed Image</h3>
+                    <img id="resultImage" class="result-image" src="" alt="Uploaded plant image">
+                </div>
+                <div class="col-md-6">
+                    <h3><i class="fas fa-diagnoses"></i> Diagnosis Results</h3>
+                    
+                    <div id="statusMessage" class="mb-3">
+                        <!-- Status will be inserted here -->
+                    </div>
+
+                    <div class="health-score" id="healthScore">
+                        <!-- Health score will be inserted here -->
+                    </div>
+
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="text-center">
+                                <h5>Health Score</h5>
+                                <div class="progress mb-2">
+                                    <div class="progress-bar bg-success" id="healthBar" role="progressbar" style="width: 0%"></div>
+                                </div>
+                                <span id="healthPercentage">0%</span>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-center">
+                                <h5>Disease Risk</h5>
+                                <div class="progress mb-2">
+                                    <div class="progress-bar bg-danger" id="diseaseBar" role="progressbar" style="width: 0%"></div>
+                                </div>
+                                <span id="diseasePercentage">0%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed Probabilities -->
+            <div class="probability-bars" id="probabilityBars">
+                <h4><i class="fas fa-chart-bar"></i> Detailed Analysis</h4>
+                <!-- Probability bars will be inserted here -->
+            </div>
+
+            <!-- Recommendations -->
+            <div class="recommendations" id="recommendations">
+                <h4><i class="fas fa-lightbulb"></i> Recommendations</h4>
+                <ul id="recommendationsList">
+                    <!-- Recommendations will be inserted here -->
+                </ul>
+            </div>
+
+            <!-- Try Another Image Button -->
+            <div class="text-center mt-4">
+                <button class="btn btn-upload" onclick="resetForm()">
+                    <i class="fas fa-redo"></i> Analyze Another Image
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Features Section -->
+    <section class="feature-grid bg-light">
+        <div class="container">
+            <h2 class="text-center mb-5" style="color: var(--primary-green);">
+                <i class="fas fa-star"></i> Why Choose Our AI Detection?
+            </h2>
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-brain"></i>
+                        </div>
+                        <h4>Advanced AI</h4>
+                        <p>Powered by deep learning models trained on thousands of plant images</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <h4>Instant Results</h4>
+                        <p>Get accurate disease detection results in seconds, not days</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <h4>High Accuracy</h4>
+                        <p>Reliable detection with confidence scores for informed decision-making</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 Plant Disease Detection AI. Helping farmers protect their crops with AI technology.</p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const loadingSection = document.getElementById('loadingSection');
+        const resultsSection = document.getElementById('resultsSection');
+        const errorMessage = document.getElementById('errorMessage');
+        const filePreview = document.getElementById('filePreview');
+        const previewImage = document.getElementById('previewImage');
+        const fileName = document.getElementById('fileName');
+        const fileSize = document.getElementById('fileSize');
+        const submitBtn = document.getElementById('submitBtn');
+        
+        let selectedFile = null;
+
+        // Drag and drop functionality
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFileSelection(files[0]);
+            }
+        });
+
+        uploadArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFileSelection(e.target.files[0]);
+            }
+        });
+
+        function handleFileSelection(file) {
+            // Validate file type
+            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/bmp', 'image/tiff', 'image/webp'];
+            if (!allowedTypes.includes(file.type)) {
+                showError('Please upload a valid image file (JPG, PNG, GIF, BMP, TIFF, WebP)');
+                uploadArea.classList.add('shake');
+                setTimeout(() => uploadArea.classList.remove('shake'), 500);
+                return;
+            }
+
+            // Validate file size (16MB)
+            if (file.size > 16 * 1024 * 1024) {
+                showError('File size too large. Please upload an image smaller than 16MB.');
+                uploadArea.classList.add('shake');
+                setTimeout(() => uploadArea.classList.remove('shake'), 500);
+                return;
+            }
+
+            selectedFile = file;
+            showFilePreview(file);
+            hideError();
+        }
+
+        function showFilePreview(file) {
+            // Create preview image
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                previewImage.src = e.target.result;
+                fileName.textContent = file.name;
+                fileSize.textContent = formatFileSize(file.size);
+                
+                // Show preview with animation
+                filePreview.style.display = 'block';
+                filePreview.classList.add('fade-in-up');
+                
+                // Add pulse animation to submit button
+                submitBtn.classList.add('pulse');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function analyzeImage() {
+            if (!selectedFile) {
+                showError('Please select an image first.');
+                return;
+            }
+            
+            // Remove pulse animation
+            submitBtn.classList.remove('pulse');
+            
+            // Hide preview and show loading
+            filePreview.style.display = 'none';
+            uploadFile(selectedFile);
+        }
+
+        function clearSelection() {
+            selectedFile = null;
+            fileInput.value = '';
+            filePreview.style.display = 'none';
+            previewImage.src = '';
+            fileName.textContent = 'No file selected';
+            fileSize.textContent = '';
+            submitBtn.classList.remove('pulse');
+            hideError();
+        }
+
+        function uploadFile(file) {
+            hideError();
+            hideResults();
+            showLoading();
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                hideLoading();
+                if (data.error) {
+                    showError(data.error);
+                } else {
+                    showResults(data);
+                }
+            })
+            .catch(error => {
+                hideLoading();
+                showError('An error occurred while processing the image. Please try again.');
+                console.error('Error:', error);
+            });
+        }
+
+        function showLoading() {
+            loadingSection.style.display = 'block';
+        }
+
+        function hideLoading() {
+            loadingSection.style.display = 'none';
+        }
+
+        function showError(message) {
+            errorMessage.style.display = 'block';
+            document.getElementById('errorText').textContent = message;
+        }
+
+        function hideError() {
+            errorMessage.style.display = 'none';
+        }
+
+        function showResults(data) {
+            // Display image
+            document.getElementById('resultImage').src = data.image_data;
+
+            // Display status message
+            const statusDiv = document.getElementById('statusMessage');
+            statusDiv.className = data.status === 'healthy' ? 'status-healthy' : 'status-diseased';
+            statusDiv.innerHTML = `<h4>${data.status_message}</h4>`;
+
+            // Display health score
+            const healthScore = Math.round(data.health_score);
+            const diseaseProb = Math.round(data.disease_probability);
+
+            document.getElementById('healthScore').innerHTML = `
+                <div style="color: ${data.status === 'healthy' ? 'var(--success-green)' : 'var(--danger-red)'}">
+                    ${data.status === 'healthy' ? '✅' : '⚠️'} Overall Health: ${healthScore}%
+                </div>
+            `;
+
+            // Update progress bars
+            setTimeout(() => {
+                document.getElementById('healthBar').style.width = healthScore + '%';
+                document.getElementById('diseaseBar').style.width = diseaseProb + '%';
+                document.getElementById('healthPercentage').textContent = healthScore + '%';
+                document.getElementById('diseasePercentage').textContent = diseaseProb + '%';
+            }, 500);
+
+            // Display detailed probabilities
+            const probabilityBars = document.getElementById('probabilityBars');
+            let probabilityHTML = '<h4><i class="fas fa-chart-bar"></i> Detailed Analysis</h4>';
+            
+            data.all_predictions.forEach((pred, index) => {
+                const percentage = Math.round(pred.percentage);
+                const cleanName = pred.class.replace(/___/g, ' - ').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                const isTop = index === 0;
+                const barColor = pred.class.toLowerCase().includes('healthy') ? 'success' : 'danger';
+                
+                probabilityHTML += `
+                    <div class="probability-item ${isTop ? 'border border-primary' : ''}">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="fw-bold">${cleanName}</span>
+                            <span class="badge ${isTop ? 'bg-primary' : 'bg-secondary'}">${percentage}%</span>
+                        </div>
+                        <div class="progress">
+                            <div class="progress-bar bg-${barColor}" role="progressbar" 
+                                 style="width: ${percentage}%" aria-valuenow="${percentage}" 
+                                 aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+                `;
+            });
+            probabilityBars.innerHTML = probabilityHTML;
+
+            // Display recommendations
+            const recommendationsList = document.getElementById('recommendationsList');
+            let recHTML = '';
+            data.recommendations.forEach(rec => {
+                recHTML += `<li><i class="fas fa-check-circle" style="color: var(--success-green); margin-right: 0.5rem;"></i>${rec}</li>`;
+            });
+            recommendationsList.innerHTML = recHTML;
+
+            resultsSection.style.display = 'block';
+            resultsSection.classList.add('result-card');
+            
+            // Animate progress bars with delay
+            setTimeout(() => {
+                animateProgressBars();
+            }, 300);
+            
+            resultsSection.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function hideResults() {
+            resultsSection.style.display = 'none';
+            resultsSection.classList.remove('result-card');
+        }
+
+        function resetForm() {
+            hideResults();
+            hideError();
+            clearSelection();
+        }
+
+        // Add some animation delays for progress bars
+        function animateProgressBars() {
+            const progressBars = document.querySelectorAll('.progress-bar');
+            progressBars.forEach((bar, index) => {
+                setTimeout(() => {
+                    bar.style.transition = 'width 1s ease-in-out';
+                }, index * 100);
+            });
+        }
+    </script>
+</body>
+</html>

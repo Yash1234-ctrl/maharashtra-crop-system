@@ -1,0 +1,1327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Maharashtra AI Crop Forecasting System</title>
+    
+    <!-- CSS Libraries -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #2E7D32;
+            --secondary-color: #4CAF50;
+            --accent-color: #81C784;
+            --background-color: #F1F8E9;
+            --card-bg: #FFFFFF;
+            --text-primary: #1B5E20;
+            --text-secondary: #2E7D32;
+            --border-color: #C8E6C8;
+            --success-color: #4CAF50;
+            --warning-color: #FF9800;
+            --danger-color: #F44336;
+            --info-color: #2196F3;
+        }
+
+        /* Dark theme variables (auto-applied via data-theme) */
+        :root[data-theme='dark'] {
+            --primary-color: #1b5e20;
+            --secondary-color: #2e7d32;
+            --accent-color: #388e3c;
+            --background-color: #0b1a0b;
+            --card-bg: #111a11;
+            --text-primary: #e5f2e7;
+            --text-secondary: #c8e6c9;
+            --border-color: #264d26;
+            --success-color: #66bb6a;
+            --warning-color: #ffb74d;
+            --danger-color: #ef5350;
+            --info-color: #64b5f6;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--background-color) 0%, #E8F5E8 100%);
+            color: var(--text-primary);
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            padding: 1.5rem 0;
+            box-shadow: 0 4px 12px rgba(46, 125, 50, 0.3);
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            margin-bottom: 1.5rem;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, var(--secondary-color), var(--accent-color));
+            color: white;
+            border-radius: 16px 16px 0 0 !important;
+            padding: 1rem 1.5rem;
+            border: none;
+            font-weight: 600;
+        }
+
+        .nav-tabs {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 0.5rem;
+            margin: 1rem 0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-tabs .nav-link {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-weight: 500;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-tabs .nav-link.active {
+            background: var(--secondary-color);
+            color: white;
+        }
+
+        .metric-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+        }
+
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-label {
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .metric-success { color: var(--success-color); }
+        .metric-warning { color: var(--warning-color); }
+        .metric-danger { color: var(--danger-color); }
+        .metric-info { color: var(--info-color); }
+
+        .chart-container {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 1rem;
+            margin: 1rem 0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #1B5E20, var(--primary-color));
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(46, 125, 50, 0.3);
+        }
+
+        .form-control {
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.75rem;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 0.2rem rgba(76, 175, 80, 0.25);
+        }
+
+        .alert {
+            border-radius: 12px;
+            border: none;
+            padding: 1rem 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .alert-success {
+            background: rgba(76, 175, 80, 0.1);
+            color: var(--success-color);
+            border-left: 4px solid var(--success-color);
+        }
+
+        .alert-warning {
+            background: rgba(255, 152, 0, 0.1);
+            color: var(--warning-color);
+            border-left: 4px solid var(--warning-color);
+        }
+
+        .alert-danger {
+            background: rgba(244, 67, 54, 0.1);
+            color: var(--danger-color);
+            border-left: 4px solid var(--danger-color);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .spinner-border {
+            color: var(--secondary-color);
+            width: 3rem;
+            height: 3rem;
+        }
+
+        .recommendations-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .recommendations-list li {
+            background: var(--background-color);
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            border-left: 4px solid var(--secondary-color);
+        }
+
+        .fertilizer-plan {
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .fertilizer-plan:hover {
+            border-color: var(--secondary-color);
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.2);
+        }
+
+        .fertilizer-plan.selected {
+            border-color: var(--secondary-color);
+            background: rgba(76, 175, 80, 0.05);
+        }
+
+        .risk-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .risk-low {
+            background: rgba(76, 175, 80, 0.2);
+            color: var(--success-color);
+        }
+
+        .risk-medium {
+            background: rgba(255, 152, 0, 0.2);
+            color: var(--warning-color);
+        }
+
+        .risk-high {
+            background: rgba(244, 67, 54, 0.2);
+            color: var(--danger-color);
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .card-body {
+                padding: 1rem;
+            }
+            
+            .metric-card {
+                padding: 1rem;
+            }
+            
+            .metric-value {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="container">
+            <h1><i class="fas fa-seedling"></i> Enhanced Maharashtra AI Crop Forecasting System</h1>
+            <p>Advanced Agricultural Intelligence with Fertilizer Analysis, Pest Risk Assessment & Health Mapping</p>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container-fluid px-4">
+        <!-- Navigation Tabs -->
+        <ul class="nav nav-tabs justify-content-center" id="mainTabs" role="tablist">
+            <li class="nav-item">
+                <button class="nav-link active" id="fertilizer-tab" data-bs-toggle="tab" data-bs-target="#fertilizer" type="button">
+                    <i class="fas fa-leaf me-2"></i>Fertilizer Analysis
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" id="pest-risk-tab" data-bs-toggle="tab" data-bs-target="#pest-risk" type="button">
+                    <i class="fas fa-bug me-2"></i>Pest Risk Assessment
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" id="health-map-tab" data-bs-toggle="tab" data-bs-target="#health-map" type="button">
+                    <i class="fas fa-map-marked-alt me-2"></i>Health Mapping
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" id="zone-alerts-tab" data-bs-toggle="tab" data-bs-target="#zone-alerts" type="button">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Zone Alerts
+                </button>
+            </li>
+        </ul>
+
+        <!-- Tab Content -->
+        <div class="tab-content mt-4" id="mainTabContent">
+            
+            <!-- Fertilizer Analysis Tab -->
+            <div class="tab-pane fade show active" id="fertilizer" role="tabpanel">
+                <div class="row">
+                    <div class="col-lg-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-seedling me-2"></i>Fertilizer Input Parameters</h5>
+                            </div>
+                            <div class="card-body">
+                                <form id="fertilizerForm">
+                                    <div class="mb-3">
+                                        <label for="fert_crop_type" class="form-label">Crop Type</label>
+                                        <select class="form-control" id="fert_crop_type" name="crop_type" required>
+                                            <option value="Cotton">Cotton</option>
+                                            <option value="Tomato">Tomato</option>
+                                            <option value="Potato">Potato</option>
+                                            <option value="Rice">Rice</option>
+                                            <option value="Wheat">Wheat</option>
+                                            <option value="Sugarcane">Sugarcane</option>
+                                            <option value="Onion">Onion</option>
+                                            <option value="Grapes">Grapes</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="fert_farm_area" class="form-label">Farm Area (hectares)</label>
+                                        <input type="number" class="form-control" id="fert_farm_area" name="farm_area" 
+                                               min="0.1" max="1000" step="0.1" value="1.0" required>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">Soil NPK Levels (kg/ha)</label>
+                                        <div class="row">
+                                            <div class="col-4">
+                                                <input type="number" class="form-control" name="nitrogen" 
+                                                       placeholder="N" min="0" max="300" value="50">
+                                            </div>
+                                            <div class="col-4">
+                                                <input type="number" class="form-control" name="phosphorus" 
+                                                       placeholder="P" min="0" max="150" value="30">
+                                            </div>
+                                            <div class="col-4">
+                                                <input type="number" class="form-control" name="potassium" 
+                                                       placeholder="K" min="0" max="400" value="40">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="soil_ph" class="form-label">Soil pH</label>
+                                        <input type="number" class="form-control" id="soil_ph" name="soil_ph" 
+                                               min="3.0" max="10.0" step="0.1" value="6.5">
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <div class="form-check">
+                                            <input type="checkbox" class="form-check-input" id="organic_preference">
+                                            <label class="form-check-label" for="organic_preference">
+                                                Include Organic Options
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <button type="submit" class="btn btn-primary w-100">
+                                        <i class="fas fa-calculator me-2"></i>Calculate Fertilizer Recommendations
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-8">
+                        <div id="fertilizerResults">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Fertilizer Cost Analysis & Recommendations</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div id="fertilizerGraphs" style="height: 500px;"></div>
+                                    
+                                    <!-- Fertilizer Plans -->
+                                    <div id="fertilizerPlans" class="mt-4">
+                                        <h6 class="mb-3"><i class="fas fa-clipboard-list me-2"></i>Recommended Fertilizer Plans</h6>
+                                        <div id="fertilizer-plans-container"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="fertilizerLoadingIndicator" class="d-none">
+                            <div class="loading">
+                                <div class="spinner-border" role="status"></div>
+                                <p class="mt-3">Calculating fertilizer recommendations...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pest Risk Assessment Tab -->
+            <div class="tab-pane fade" id="pest-risk" role="tabpanel">
+                <div class="row">
+                    <div class="col-lg-3">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-map-marker-alt me-2"></i>Location & Crop</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="pest_district" class="form-label">District</label>
+                                    <select class="form-control" id="pest_district">
+                                        <option value="Pune">Pune</option>
+                                        <option value="Mumbai">Mumbai</option>
+                                        <option value="Nashik">Nashik</option>
+                                        <option value="Nagpur">Nagpur</option>
+                                        <option value="Aurangabad">Aurangabad</option>
+                                        <option value="Kolhapur">Kolhapur</option>
+                                        <option value="Solapur">Solapur</option>
+                                        <option value="Akola">Akola</option>
+                                        <option value="Amravati">Amravati</option>
+                                        <option value="Yavatmal">Yavatmal</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="pest_crop_type" class="form-label">Crop Type</label>
+                                    <select class="form-control" id="pest_crop_type">
+                                        <option value="Cotton">Cotton</option>
+                                        <option value="Tomato">Tomato</option>
+                                        <option value="Rice">Rice</option>
+                                        <option value="Sugarcane">Sugarcane</option>
+                                        <option value="Wheat">Wheat</option>
+                                        <option value="Onion">Onion</option>
+                                        <option value="Grapes">Grapes</option>
+                                    </select>
+                                </div>
+                                <button class="btn btn-outline-primary w-100" onclick="loadPestRiskData()">
+                                    <i class="fas fa-sync-alt me-2"></i>Assess Pest Risk
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Risk Summary Card -->
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Risk Summary</h5>
+                            </div>
+                            <div class="card-body" id="pestRiskSummary">
+                                <div class="text-center">
+                                    <div class="metric-value metric-info">--%</div>
+                                    <div class="metric-label">Overall Risk</div>
+                                    <hr>
+                                    <div id="risk-details">
+                                        <p class="text-muted">Select location and crop to view risk assessment</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Pest List -->
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-bug me-2"></i>Identified Pests</h5>
+                            </div>
+                            <div class="card-body" id="pestList">
+                                <p class="text-muted">Pest analysis will appear here</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-9">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>Comprehensive Pest Risk Analysis</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="pestRiskGraphs" style="height: 600px;"></div>
+                                
+                                <!-- Management Recommendations -->
+                                <div class="mt-4" id="pestManagementRecommendations">
+                                    <h6><i class="fas fa-shield-alt me-2"></i>Pest Management Recommendations</h6>
+                                    <div id="management-recommendations-container"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Health Mapping Tab -->
+            <div class="tab-pane fade" id="health-map" role="tabpanel">
+                <div class="row">
+                    <div class="col-lg-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-cog me-2"></i>Health Map Parameters</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="health_district" class="form-label">District</label>
+                                    <select class="form-control" id="health_district">
+                                        <option value="Pune">Pune</option>
+                                        <option value="Mumbai">Mumbai</option>
+                                        <option value="Nashik">Nashik</option>
+                                        <option value="Nagpur">Nagpur</option>
+                                        <option value="Aurangabad">Aurangabad</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="health_crop_type" class="form-label">Crop Type</label>
+                                    <select class="form-control" id="health_crop_type">
+                                        <option value="Cotton">Cotton</option>
+                                        <option value="Tomato">Tomato</option>
+                                        <option value="Rice">Rice</option>
+                                        <option value="Sugarcane">Sugarcane</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="health_analysis_type" class="form-label">Analysis Type</label>
+                                    <select class="form-control" id="health_analysis_type">
+                                        <option value="ndvi">NDVI Analysis</option>
+                                        <option value="soil_health">Soil Health</option>
+                                        <option value="disease_risk">Disease Risk</option>
+                                        <option value="comprehensive">Comprehensive</option>
+                                    </select>
+                                </div>
+                                <button class="btn btn-primary w-100" onclick="loadHealthMap()">
+                                    <i class="fas fa-map-marked-alt me-2"></i>Generate Health Map
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Health Statistics -->
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Health Statistics</h5>
+                            </div>
+                            <div class="card-body" id="healthStats">
+                                <div class="row text-center">
+                                    <div class="col-6 mb-3">
+                                        <div class="metric-card">
+                                            <div class="metric-value metric-success" id="excellentPercent">--%</div>
+                                            <div class="metric-label">Excellent Health</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 mb-3">
+                                        <div class="metric-card">
+                                            <div class="metric-value metric-info" id="goodPercent">--%</div>
+                                            <div class="metric-label">Good Health</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 mb-3">
+                                        <div class="metric-card">
+                                            <div class="metric-value metric-warning" id="moderatePercent">--%</div>
+                                            <div class="metric-label">Moderate Health</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 mb-3">
+                                        <div class="metric-card">
+                                            <div class="metric-value metric-danger" id="poorPercent">--%</div>
+                                            <div class="metric-label">Poor Health</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-8">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-map me-2"></i>Field Health Visualization</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="healthMapViz" style="height: 400px;"></div>
+                                
+                                <!-- Health Recommendations -->
+                                <div class="mt-4" id="healthRecommendations">
+                                    <h6><i class="fas fa-medkit me-2"></i>Health Improvement Recommendations</h6>
+                                    <div id="health-recommendations-container"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Zone Alerts Tab -->
+            <div class="tab-pane fade" id="zone-alerts" role="tabpanel">
+                <div class="row">
+                    <div class="col-lg-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-bell me-2"></i>Active Zone Alerts</h5>
+                            </div>
+                            <div class="card-body" id="zoneAlertsList">
+                                <!-- Dynamic alerts will be loaded here -->
+                            </div>
+                        </div>
+
+                        <!-- Weather Alerts -->
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-cloud-rain me-2"></i>Weather Alerts</h5>
+                            </div>
+                            <div class="card-body" id="weatherAlerts">
+                                <!-- Dynamic weather alerts will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-map-marked-alt me-2"></i>Zone Risk Overview</h5>
+                            </div>
+                            <div class="card-body" id="zoneRiskOverview">
+                                <!-- Dynamic zone risk overview will be loaded here -->
+                            </div>
+                        </div>
+
+                        <!-- Advisory Alerts -->
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-lightbulb me-2"></i>Agricultural Advisories</h5>
+                            </div>
+                            <div class="card-body" id="advisoryAlerts">
+                                <!-- Dynamic advisory alerts will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <script>
+        // Theme helpers: follow user's system theme and expose colors for charts
+        (function initTheme() {
+            const media = window.matchMedia('(prefers-color-scheme: dark)');
+            const apply = () => {
+                document.documentElement.setAttribute('data-theme', media.matches ? 'dark' : 'light');
+            };
+            try { media.addEventListener('change', apply); } catch (_) { media.addListener(apply); }
+            apply();
+        })();
+
+        function getThemeColors() {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            return {
+                isDark,
+                text: getComputedStyle(document.documentElement).getPropertyValue('--text-primary').trim() || (isDark ? '#e5e7eb' : '#111827'),
+                muted: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim() || (isDark ? '#9ca3af' : '#374151'),
+                grid: isDark ? 'rgba(156,163,175,0.25)' : 'rgba(55,65,81,0.15)',
+                panel: 'rgba(0,0,0,0)',
+            };
+        }
+
+        // Theme-aware categorical palette for traces
+        function getThemePalette() {
+            const theme = getThemeColors();
+            return theme.isDark
+                ? ['#22c55e','#e11d48','#f59e0b','#0ea5e9','#8b5cf6','#14b8a6','#f43f5e','#84cc16','#06b6d4']
+                : ['#16a34a','#be123c','#d97706','#0284c7','#6d28d9','#0d9488','#e11d48','#65a30d','#0891b2'];
+        }
+
+        // Global variables
+        let currentFertilizerData = null;
+        let currentPestData = null;
+        let currentHealthData = null;
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            setupEventListeners();
+            loadInitialData();
+        });
+
+        function setupEventListeners() {
+            // Fertilizer form
+            document.getElementById('fertilizerForm').addEventListener('submit', handleFertilizerAnalysis);
+            
+            // Tab switching
+            document.querySelectorAll('.nav-link').forEach(tab => {
+                tab.addEventListener('click', handleTabSwitch);
+            });
+        }
+
+        function loadInitialData() {
+            // Load default fertilizer analysis
+            loadFertilizerAnalysis();
+            // Load zone alerts
+            loadZoneAlerts();
+        }
+
+        function handleTabSwitch(e) {
+            const tabId = e.target.getAttribute('data-bs-target');
+            
+            if (tabId === '#zone-alerts') {
+                loadZoneAlerts();
+            }
+        }
+
+        async function handleFertilizerAnalysis(e) {
+            e.preventDefault();
+            await loadFertilizerAnalysis();
+        }
+
+        async function loadFertilizerAnalysis() {
+            const loadingIndicator = document.getElementById('fertilizerLoadingIndicator');
+            const resultsDiv = document.getElementById('fertilizerResults');
+            
+            // Show loading
+            loadingIndicator.classList.remove('d-none');
+            resultsDiv.style.opacity = '0.5';
+            
+            try {
+                const formData = new FormData(document.getElementById('fertilizerForm'));
+                const data = {
+                    crop_type: formData.get('crop_type') || 'Cotton',
+                    farm_area: parseFloat(formData.get('farm_area')) || 1.0,
+                    nitrogen: parseInt(formData.get('nitrogen')) || 50,
+                    phosphorus: parseInt(formData.get('phosphorus')) || 30,
+                    potassium: parseInt(formData.get('potassium')) || 40,
+                    soil_ph: parseFloat(formData.get('soil_ph')) || 6.5,
+                    organic_preference: document.getElementById('organic_preference').checked
+                };
+                
+                const response = await fetch('/api/fertilizer_cost_graphs', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    const graphData = JSON.parse(result.graph);
+                    const theme = getThemeColors();
+                    const palette = getThemePalette();
+                    const coloredTraces = (graphData.data || []).map((trace, idx) => {
+                        const color = palette[idx % palette.length];
+                        const t = Object.assign({}, trace);
+                        if (t.type === 'bar' || t.type === 'scatter' || t.type === 'box' || t.type === 'violin') {
+                            t.marker = Object.assign({}, t.marker, { color, opacity: 1.0, line: Object.assign({}, (t.marker||{}).line, { color: theme.isDark ? '#ffffff' : '#111827', width: 2 }) });
+                            t.line = Object.assign({}, t.line, { color, width: Math.max(2, t.line?.width || 2) });
+                        }
+                        if (t.type === 'bar') {
+                            t.marker = Object.assign({}, t.marker, {
+                                line: Object.assign({}, (t.marker||{}).line, { color: theme.isDark ? '#ffffff' : '#111827', width: 2 }),
+                                opacity: 1.0
+                            });
+                        }
+                        return t;
+                    });
+                    const themedLayout = Object.assign({}, graphData.layout || {}, {
+                        paper_bgcolor: 'rgba(0,0,0,0)',
+                        plot_bgcolor: 'rgba(0,0,0,0)',
+                        font: Object.assign({}, (graphData.layout||{}).font, { color: theme.text })
+                    });
+                    Plotly.newPlot('fertilizerGraphs', coloredTraces, themedLayout, {
+                        responsive: true,
+                        displayModeBar: false
+                    });
+                    
+                    // Display fertilizer plans
+                    displayFertilizerPlans(result.recommendations);
+                    currentFertilizerData = result.recommendations;
+                } else {
+                    showError('Failed to load fertilizer analysis: ' + result.message);
+                }
+                
+            } catch (error) {
+                console.error('Fertilizer analysis error:', error);
+                showError('Failed to load fertilizer analysis. Please try again.');
+            } finally {
+                loadingIndicator.classList.add('d-none');
+                resultsDiv.style.opacity = '1';
+            }
+        }
+
+        function displayFertilizerPlans(recommendations) {
+            const container = document.getElementById('fertilizer-plans-container');
+            
+            if (!recommendations || !recommendations.plans) {
+                container.innerHTML = '<p class="text-muted">No fertilizer plans available</p>';
+                return;
+            }
+            
+            let plansHTML = '';
+            recommendations.plans.forEach((plan, index) => {
+                const isRecommended = plan.type === 'balanced';
+                plansHTML += `
+                    <div class="fertilizer-plan ${isRecommended ? 'selected' : ''}" onclick="selectFertilizerPlan(${index})">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">
+                                    ${plan.name} 
+                                    ${isRecommended ? '<span class="badge bg-success ms-2">Recommended</span>' : ''}
+                                </h6>
+                                <p class="mb-1 text-muted">${plan.description}</p>
+                            </div>
+                            <div class="text-end">
+                                <div class="metric-value metric-info" style="font-size: 1.5rem;">₹${plan.total_cost}</div>
+                                <div class="metric-label">Total Cost</div>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-4 text-center">
+                                <div class="metric-value" style="font-size: 1.2rem;">${plan.fertilizers.urea || 0} kg</div>
+                                <div class="metric-label">Urea</div>
+                            </div>
+                            <div class="col-4 text-center">
+                                <div class="metric-value" style="font-size: 1.2rem;">${plan.fertilizers.dap || 0} kg</div>
+                                <div class="metric-label">DAP</div>
+                            </div>
+                            <div class="col-4 text-center">
+                                <div class="metric-value" style="font-size: 1.2rem;">${plan.fertilizers.mop || 0} kg</div>
+                                <div class="metric-label">MOP</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = plansHTML;
+        }
+
+        function selectFertilizerPlan(planIndex) {
+            document.querySelectorAll('.fertilizer-plan').forEach((plan, index) => {
+                if (index === planIndex) {
+                    plan.classList.add('selected');
+                } else {
+                    plan.classList.remove('selected');
+                }
+            });
+        }
+
+        async function loadPestRiskData() {
+            const district = document.getElementById('pest_district').value;
+            const cropType = document.getElementById('pest_crop_type').value;
+            
+            try {
+                const response = await fetch(`/api/pest_risk_graphs/${district}/${cropType}`);
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    const graphData = JSON.parse(result.graph);
+                    const theme = getThemeColors();
+                    // Apply accessible, high-contrast palette to pest graphs
+                    const palette = getThemePalette();
+                    const coloredTraces = (graphData.data || []).map((trace, idx) => {
+                        const color = palette[idx % palette.length];
+                        const t = Object.assign({}, trace);
+                        if (t.type === 'bar' || t.type === 'scatter' || t.type === 'box' || t.type === 'violin') {
+                            t.marker = Object.assign({}, t.marker, { color });
+                            t.line = Object.assign({}, t.line, { color, width: t.line?.width || 2 });
+                        }
+                        if (t.type === 'bar') {
+                            t.marker = Object.assign({}, t.marker, {
+                                line: Object.assign({}, (t.marker||{}).line, { color: theme.isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.25)', width: 1 }),
+                                opacity: 0.95
+                            });
+                        }
+                        return t;
+                    });
+                    const themedLayout = Object.assign({}, graphData.layout || {}, {
+                        paper_bgcolor: 'rgba(0,0,0,0)',
+                        plot_bgcolor: 'rgba(0,0,0,0)',
+                        font: Object.assign({}, (graphData.layout||{}).font, { color: theme.text }),
+                        xaxis: Object.assign({}, (graphData.layout||{}).xaxis, { color: theme.text, gridcolor: theme.grid, tickfont: { color: theme.text, size: 13 }, automargin: true, tickangle: -30 }),
+                        yaxis: Object.assign({}, (graphData.layout||{}).yaxis, { color: theme.text, gridcolor: theme.grid, tickfont: { color: theme.text, size: 13 }, automargin: true }),
+                        legend: Object.assign({}, (graphData.layout||{}).legend, {
+                            bgcolor: theme.isDark ? 'rgba(55,65,81,0.6)' : 'rgba(255,255,255,0.8)',
+                            bordercolor: theme.grid,
+                            borderwidth: 1
+                        })
+                    });
+                    Plotly.newPlot('pestRiskGraphs', coloredTraces, themedLayout, {
+                        responsive: true,
+                        displayModeBar: false
+                    });
+                    
+                    // Update risk summary
+                    updatePestRiskSummary(result.summary);
+                    
+                    // Display pest list
+                    displayPestList(result.pest_analysis);
+                    
+                    // Display management recommendations
+                    displayPestManagementRecommendations(result.management_recommendations);
+                } else {
+                    showError('Failed to load pest risk data: ' + result.message);
+                }
+                
+            } catch (error) {
+                console.error('Pest risk error:', error);
+                showError('Failed to load pest risk data. Please try again.');
+            }
+        }
+
+        function updatePestRiskSummary(summary) {
+            const summaryDiv = document.getElementById('pestRiskSummary');
+            
+            const riskClass = summary.overall_risk > 70 ? 'metric-danger' : 
+                            summary.overall_risk > 40 ? 'metric-warning' : 'metric-success';
+            
+            summaryDiv.innerHTML = `
+                <div class="text-center">
+                    <div class="metric-value ${riskClass}">${summary.overall_risk}%</div>
+                    <div class="metric-label">Overall Risk</div>
+                    <hr>
+                    <div id="risk-details">
+                        <p><strong>Risk Category:</strong> <span class="risk-badge risk-${summary.risk_category.toLowerCase()}">${summary.risk_category}</span></p>
+                        <p><strong>High Risk Pests:</strong> ${summary.high_risk_pests}</p>
+                        <p><strong>Management Priority:</strong> ${summary.management_priority}</p>
+                        <p><strong>Economic Impact:</strong> ₹${summary.economic_impact_estimate || 'N/A'}</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function displayPestList(pestAnalysis) {
+            const container = document.getElementById('pestList');
+            
+            if (!pestAnalysis || !pestAnalysis.identified_pests) {
+                container.innerHTML = '<p class="text-muted">No pests identified</p>';
+                return;
+            }
+            
+            let pestHTML = '';
+            pestAnalysis.identified_pests.forEach(pest => {
+                const riskClass = pest.risk_level > 70 ? 'risk-high' : 
+                                pest.risk_level > 40 ? 'risk-medium' : 'risk-low';
+                
+                pestHTML += `
+                    <div class="mb-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span><strong>${pest.name}</strong></span>
+                            <span class="risk-badge ${riskClass}">${pest.risk_level}% Risk</span>
+                        </div>
+                        <small class="text-muted">${pest.description}</small>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = pestHTML;
+        }
+
+        function displayPestManagementRecommendations(recommendations) {
+            const container = document.getElementById('management-recommendations-container');
+            
+            if (!recommendations || recommendations.length === 0) {
+                container.innerHTML = '<p class="text-muted">No management recommendations available</p>';
+                return;
+            }
+            
+            let recHTML = '<ul class="recommendations-list">';
+            recommendations.forEach(rec => {
+                recHTML += `<li><strong>${rec.category}:</strong> ${rec.recommendation}</li>`;
+            });
+            recHTML += '</ul>';
+            
+            container.innerHTML = recHTML;
+        }
+
+        async function loadHealthMap() {
+            const district = document.getElementById('health_district').value;
+            const cropType = document.getElementById('health_crop_type').value;
+            const analysisType = document.getElementById('health_analysis_type').value;
+            
+            try {
+                const response = await fetch(`/api/health_map/${district}/${cropType}?analysis_type=${analysisType}`);
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    // Display health map visualization
+                    displayHealthMapVisualization(result.health_map);
+                    
+                    // Update health statistics
+                    updateHealthStats(result.health_map.summary);
+                    
+                    // Display health recommendations
+                    displayHealthRecommendations(result.health_recommendations);
+                    
+                    currentHealthData = result;
+                } else {
+                    showError('Failed to load health map: ' + result.message);
+                }
+                
+            } catch (error) {
+                console.error('Health map error:', error);
+                showError('Failed to load health map. Please try again.');
+            }
+        }
+
+        function displayHealthMapVisualization(healthMap) {
+            const container = document.getElementById('healthMapViz');
+            
+            // Create Plotly heatmap
+            const zValues = [];
+            const xValues = [];
+            const yValues = [];
+            
+            // Generate grid data from health zones
+            for (let i = 0; i < 10; i++) {
+                const row = [];
+                for (let j = 0; j < 10; j++) {
+                    const zoneIndex = i * 10 + j;
+                    if (healthMap.health_zones && healthMap.health_zones[zoneIndex]) {
+                        row.push(healthMap.health_zones[zoneIndex].health_percentage);
+                    } else {
+                        row.push(Math.random() * 100); // Random data for demo
+                    }
+                }
+                zValues.push(row);
+            }
+            
+            const theme = getThemeColors();
+            const data = [{
+                z: zValues,
+                type: 'heatmap',
+                colorscale: [
+                    [0, '#d32f2f'],      // Poor health - Red
+                    [0.3, '#ff9800'],    // Moderate health - Orange  
+                    [0.7, '#4caf50'],    // Good health - Light Green
+                    [1, '#2e7d32']       // Excellent health - Dark Green
+                ],
+                showscale: true,
+                colorbar: {
+                    title: 'Health Score (%)',
+                    titleside: 'right',
+                    tickcolor: theme.muted,
+                    tickfont: { color: theme.text },
+                    titlefont: { color: theme.text }
+                }
+            }];
+            
+            const layout = {
+                title: 'Field Health Map',
+                xaxis: { title: 'Field Width (zones)', color: theme.muted, gridcolor: theme.grid },
+                yaxis: { title: 'Field Length (zones)', color: theme.muted, gridcolor: theme.grid },
+                margin: { t: 50, r: 50, b: 50, l: 50 },
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0)',
+                font: { color: theme.text }
+            };
+            
+            Plotly.newPlot('healthMapViz', data, layout, {
+                responsive: true,
+                displayModeBar: false
+            });
+        }
+
+        function updateHealthStats(summary) {
+            document.getElementById('excellentPercent').textContent = (summary.excellent_percent || 0) + '%';
+            document.getElementById('goodPercent').textContent = (summary.good_percent || 0) + '%';
+            document.getElementById('moderatePercent').textContent = (summary.moderate_percent || 0) + '%';
+            document.getElementById('poorPercent').textContent = (summary.poor_percent || 0) + '%';
+        }
+
+        function displayHealthRecommendations(recommendations) {
+            const container = document.getElementById('health-recommendations-container');
+            
+            if (!recommendations || recommendations.length === 0) {
+                container.innerHTML = '<p class="text-muted">No health recommendations available</p>';
+                return;
+            }
+            
+            let recHTML = '<ul class="recommendations-list">';
+            recommendations.forEach(rec => {
+                recHTML += `<li><strong>${rec.category}:</strong> ${rec.recommendation}</li>`;
+            });
+            recHTML += '</ul>';
+            
+            container.innerHTML = recHTML;
+        }
+
+        async function loadZoneAlerts() {
+            try {
+                const response = await fetch('/api/zone_alerts');
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    // Display active alerts
+                    displayZoneAlerts(result.alerts);
+                    
+                    // Display weather alerts
+                    displayWeatherAlerts(result.weather_alerts);
+                    
+                    // Display zone risk overview
+                    displayZoneRiskOverview(result.zone_risks);
+                    
+                    // Display advisory alerts
+                    displayAdvisoryAlerts(result.advisories);
+                } else {
+                    showError('Failed to load zone alerts: ' + result.message);
+                }
+                
+            } catch (error) {
+                console.error('Zone alerts error:', error);
+                // Load default alerts for demo
+                loadDefaultZoneAlerts();
+            }
+        }
+
+        function loadDefaultZoneAlerts() {
+            // Display default demo alerts
+            document.getElementById('zoneAlertsList').innerHTML = `
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Weather Alert:</strong> Heavy rainfall expected in Western Zone districts. Farmers advised to postpone harvesting operations.
+                </div>
+                <div class="alert alert-danger">
+                    <i class="fas fa-bug me-2"></i>
+                    <strong>Pest Alert:</strong> High risk of Pink Bollworm in Vidarbha Zone cotton fields. Immediate IPM measures recommended.
+                </div>
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <strong>Advisory:</strong> Favorable conditions for fertilizer application in Coastal Zone. Optimal soil moisture levels detected.
+                </div>
+            `;
+            
+            // Display default zone risk overview
+            document.getElementById('zoneRiskOverview').innerHTML = `
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span><strong>Western Zone</strong> (Pune, Nashik, Kolhapur)</span>
+                        <span class="badge bg-warning">Medium Risk</span>
+                    </div>
+                    <div class="progress mt-2">
+                        <div class="progress-bar bg-warning" style="width: 65%"></div>
+                    </div>
+                    <small class="text-muted">Weather stress, irregular rainfall patterns affecting crop growth</small>
+                </div>
+                
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span><strong>Vidarbha Zone</strong> (Nagpur, Akola, Yavatmal)</span>
+                        <span class="badge bg-danger">High Risk</span>
+                    </div>
+                    <div class="progress mt-2">
+                        <div class="progress-bar bg-danger" style="width: 85%"></div>
+                    </div>
+                    <small class="text-muted">Pest attacks, drought conditions, soil degradation issues</small>
+                </div>
+                
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span><strong>Coastal Zone</strong> (Mumbai, Thane, Raigad)</span>
+                        <span class="badge bg-success">Low Risk</span>
+                    </div>
+                    <div class="progress mt-2">
+                        <div class="progress-bar bg-success" style="width: 35%"></div>
+                    </div>
+                    <small class="text-muted">Favorable weather conditions, adequate soil moisture</small>
+                </div>
+
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span><strong>Marathwada Zone</strong> (Aurangabad, Latur)</span>
+                        <span class="badge bg-warning">Medium Risk</span>
+                    </div>
+                    <div class="progress mt-2">
+                        <div class="progress-bar bg-warning" style="width: 55%"></div>
+                    </div>
+                    <small class="text-muted">Moderate drought conditions, fertilizer shortage concerns</small>
+                </div>
+            `;
+        }
+
+        function displayZoneAlerts(alerts) {
+            const container = document.getElementById('zoneAlertsList');
+            
+            if (!alerts || alerts.length === 0) {
+                container.innerHTML = '<p class="text-muted">No active alerts</p>';
+                return;
+            }
+            
+            let alertsHTML = '';
+            alerts.forEach(alert => {
+                const alertClass = alert.severity === 'high' ? 'alert-danger' : 
+                                 alert.severity === 'medium' ? 'alert-warning' : 'alert-info';
+                
+                const title = (alert.type || 'Alert').replace(/_/g, ' ');
+                const timestamp = alert.timestamp ? `<br><small class="text-muted">Updated: ${new Date(alert.timestamp).toLocaleString()}</small>` : '';
+                alertsHTML += `
+                    <div class="alert ${alertClass}">
+                        <i class="fas fa-${alert.icon || 'info-circle'} me-2"></i>
+                        <strong>${title}:</strong> ${alert.message}${timestamp}
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = alertsHTML;
+        }
+
+        function displayWeatherAlerts(weatherAlerts) {
+            const container = document.getElementById('weatherAlerts');
+            
+            if (!weatherAlerts || weatherAlerts.length === 0) {
+                container.innerHTML = '<p class="text-muted">No weather alerts</p>';
+                return;
+            }
+            
+            let alertsHTML = '';
+            weatherAlerts.forEach(alert => {
+                alertsHTML += `
+                    <div class="alert alert-info">
+                        <i class="fas fa-cloud-rain me-2"></i>
+                        <strong>${alert.district}:</strong> ${alert.forecast}
+                        <br><small class="text-muted">Impact: ${alert.agricultural_impact}</small>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = alertsHTML;
+        }
+
+        function displayZoneRiskOverview(zoneRisks) {
+            const container = document.getElementById('zoneRiskOverview');
+            
+            if (!zoneRisks || zoneRisks.length === 0) {
+                loadDefaultZoneAlerts(); // Load default content
+                return;
+            }
+            
+            let riskHTML = '';
+            zoneRisks.forEach(zone => {
+                const badgeClass = zone.risk_level === 'High' ? 'bg-danger' : 
+                                 zone.risk_level === 'Medium' ? 'bg-warning' : 'bg-success';
+                const progressClass = zone.risk_level === 'High' ? 'bg-danger' : 
+                                     zone.risk_level === 'Medium' ? 'bg-warning' : 'bg-success';
+                
+                riskHTML += `
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span><strong>${zone.zone_name}</strong></span>
+                            <span class="badge ${badgeClass}">${zone.risk_level} Risk</span>
+                        </div>
+                        <div class="progress mt-2">
+                            <div class="progress-bar ${progressClass}" style="width: ${zone.risk_percentage}%"></div>
+                        </div>
+                        <small class="text-muted">${zone.risk_factors}</small>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = riskHTML;
+        }
+
+        function displayAdvisoryAlerts(advisories) {
+            const container = document.getElementById('advisoryAlerts');
+            
+            if (!advisories || advisories.length === 0) {
+                container.innerHTML = `
+                    <div class="alert alert-success">
+                        <i class="fas fa-lightbulb me-2"></i>
+                        <strong>General Advisory:</strong> Monitor crop health regularly and maintain proper irrigation schedules.
+                    </div>
+                    <div class="alert alert-info">
+                        <i class="fas fa-leaf me-2"></i>
+                        <strong>Fertilizer Advisory:</strong> Apply balanced NPK fertilizers based on soil test recommendations.
+                    </div>
+                `;
+                return;
+            }
+            
+            let advisoryHTML = '';
+            advisories.forEach(advisory => {
+                advisoryHTML += `
+                    <div class="alert alert-info">
+                        <i class="fas fa-lightbulb me-2"></i>
+                        <strong>${advisory.title}:</strong> ${advisory.message}
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = advisoryHTML;
+        }
+
+        function showError(message) {
+            const alertHTML = `
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            
+            const container = document.querySelector('.container-fluid');
+            if (container) {
+                const alertDiv = document.createElement('div');
+                alertDiv.innerHTML = alertHTML;
+                container.insertBefore(alertDiv.firstElementChild, container.firstElementChild);
+                
+                setTimeout(() => {
+                    const alert = container.querySelector('.alert-danger');
+                    if (alert) alert.remove();
+                }, 5000);
+            }
+        }
+
+        // Export functions for global access
+        window.loadPestRiskData = loadPestRiskData;
+        window.loadHealthMap = loadHealthMap;
+        window.selectFertilizerPlan = selectFertilizerPlan;
+    </script>
+</body>
+</html>

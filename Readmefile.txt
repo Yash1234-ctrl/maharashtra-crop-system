@@ -1,0 +1,1 @@
+This dataset contains information on Statewise and monthwise details on the requirement and availability of major Chemical fertilizer products like DAP(Diammonium phosphate), MAP(Monoammonium phosphate), MOP(Muriate of Potash), TSP(Triple Superphosphate), NPK(Nitrogen, phosphorus and potassium), and UREA(carbamide).

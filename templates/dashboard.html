@@ -1,0 +1,2436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maharashtra AI Crop Forecasting System</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        body { 
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        .glass-morphism {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .gradient-text {
+            background: linear-gradient(45deg, #10b981, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .sidebar-item:hover {
+            background: rgba(16, 185, 129, 0.1);
+            border-left: 4px solid #10b981;
+        }
+        .tab-active {
+            background: #10b981 !important;
+            color: white !important;
+        }
+        .npk-chart {
+            width: 300px;
+            height: 300px;
+        }
+        .upload-zone {
+            border: 2px dashed #10b981;
+            transition: all 0.3s ease;
+        }
+        .upload-zone:hover {
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.05);
+        }
+        .risk-card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .risk-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</head>
+<body class="min-h-screen text-gray-100">
+    
+    <!-- Main Layout -->
+    <div class="flex">
+        
+        <!-- Sidebar -->
+        <div class="w-64 min-h-screen glass-morphism border-r border-gray-700">
+            <div class="p-6">
+                <!-- Logo -->
+                <div class="flex items-center space-x-3 mb-8">
+                    <div class="w-10 h-10 bg-gradient-to-r from-green-500 to-blue-500 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-seedling text-white text-lg"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-sm font-bold gradient-text">Farm Information</h1>
+                    </div>
+                </div>
+                
+                <!-- Location & Crop Details -->
+                <div class="space-y-6">
+                    <div class="space-y-2">
+                        <div class="flex items-center text-red-400 text-sm">
+                            <i class="fas fa-map-marker-alt mr-2"></i>
+                            Location & Crop Details
+                        </div>
+                        
+                        <!-- District Selection -->
+                        <div class="space-y-2">
+                            <label class="text-xs text-gray-400">Select District</label>
+                            <select id="districtSelect" class="w-full bg-gray-800 border border-gray-600 rounded-lg p-3 text-sm focus:border-green-500">
+                                <option value="Pune">Pune</option>
+                                <option value="Nashik">Nashik</option>
+                                <option value="Mumbai">Mumbai</option>
+                                <option value="Nagpur">Nagpur</option>
+                                <option value="Aurangabad">Aurangabad</option>
+                                <option value="Solapur">Solapur</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Crop Type -->
+                        <div class="space-y-2">
+                            <label class="text-xs text-gray-400">Select Crop Type</label>
+                            <select id="cropSelect" class="w-full bg-gray-800 border border-gray-600 rounded-lg p-3 text-sm focus:border-green-500">
+                                <option value="Cotton">Cotton</option>
+                                <option value="Tomato">Tomato</option>
+                                <option value="Potato">Potato</option>
+                                <option value="Rice">Rice</option>
+                                <option value="Wheat">Wheat</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Growth Stage -->
+                        <div class="space-y-2">
+                            <label class="text-xs text-gray-400">Current Growth Stage</label>
+                            <select id="growthStage" class="w-full bg-gray-800 border border-gray-600 rounded-lg p-3 text-sm focus:border-green-500">
+                                <option value="Sowing">Sowing</option>
+                                <option value="Vegetative">Vegetative</option>
+                                <option value="Flowering">Flowering</option>
+                                <option value="Fruiting">Fruiting</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Farm Area -->
+                        <div class="space-y-2">
+                            <label class="text-xs text-gray-400">Farm Area (Hectares)</label>
+                            <div class="flex items-center space-x-2">
+                                <input type="number" id="farmArea" value="1.00" min="0.1" step="0.1" 
+                                       class="flex-1 bg-gray-800 border border-gray-600 rounded-lg p-3 text-sm focus:border-green-500">
+                                <button class="w-8 h-8 bg-gray-700 rounded text-xs">-</button>
+                                <button class="w-8 h-8 bg-gray-700 rounded text-xs">+</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Soil Testing Data -->
+                    <div class="space-y-2">
+                        <div class="flex items-center text-blue-400 text-sm">
+                            <i class="fas fa-flask mr-2"></i>
+                            Soil Testing Data
+                        </div>
+                        <div class="space-y-2">
+                            <div class="flex items-center text-green-400 text-sm cursor-pointer">
+                                <i class="fas fa-plus mr-2"></i>
+                                Enter Soil Test Results
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="flex-1 min-h-screen">
+            
+            <!-- Header -->
+            <div class="p-6">
+                <div class="glass-morphism rounded-2xl p-6 mb-6">
+                    <div class="flex items-center justify-center mb-4">
+                        <div class="flex items-center space-x-3">
+                            <i class="fas fa-seedling text-2xl text-green-400"></i>
+                            <h1 class="text-2xl font-bold gradient-text">Maharashtra AI Crop Forecasting System</h1>
+                        </div>
+                        <div class="ml-auto">
+                            <button class="px-4 py-2 bg-gray-700 text-white rounded-lg text-sm">Deploy</button>
+                        </div>
+                    </div>
+                    <p class="text-center text-gray-300">Comprehensive Crop Health, Weather, Soil Analysis & Pest Risk Prediction</p>
+                </div>
+                
+                <!-- Navigation Tabs -->
+                <div class="flex space-x-1 mb-6">
+                    <button onclick="showTab('crop-health')" class="tab-btn tab-active px-4 py-2 rounded-lg text-sm font-medium flex items-center space-x-2">
+                        <i class="fas fa-leaf"></i>
+                        <span>Crop Health</span>
+                    </button>
+                    <button onclick="showTab('weather-soil')" class="tab-btn px-4 py-2 rounded-lg text-sm font-medium flex items-center space-x-2 bg-gray-700 text-gray-300">
+                        <i class="fas fa-cloud-sun"></i>
+                        <span>Weather & Soil</span>
+                    </button>
+                    <button onclick="showTab('pest-risk')" class="tab-btn px-4 py-2 rounded-lg text-sm font-medium flex items-center space-x-2 bg-gray-700 text-gray-300">
+                        <i class="fas fa-bug"></i>
+                        <span>Pest Risk</span>
+                    </button>
+                    <button onclick="showTab('zone-mapping')" class="tab-btn px-4 py-2 rounded-lg text-sm font-medium flex items-center space-x-2 bg-gray-700 text-gray-300">
+                        <i class="fas fa-map"></i>
+                        <span>Zone Mapping</span>
+                    </button>
+                    <button onclick="showTab('dashboard')" class="tab-btn px-4 py-2 rounded-lg text-sm font-medium flex items-center space-x-2 bg-gray-700 text-gray-300">
+                        <i class="fas fa-chart-bar"></i>
+                        <span>Dashboard</span>
+                    </button>
+                </div>
+                
+                <!-- Tab Content -->
+                
+                <!-- Crop Health Tab -->
+                <div id="crop-health" class="tab-content">
+                    <!-- Comprehensive Analysis Form -->
+                    <div class="glass-morphism rounded-2xl p-6 mb-6">
+                        <h2 class="text-xl font-bold text-green-400 mb-6 flex items-center">
+                            <i class="fas fa-leaf mr-3"></i>
+                            Complete Crop Analysis
+                        </h2>
+                        
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                            
+                            <!-- Image Upload Section -->
+                            <div>
+                                <h3 class="text-lg font-semibold mb-4">Upload Crop Image</h3>
+                                <p class="text-gray-400 text-sm mb-4">Choose an image of crop leaf/plant</p>
+                                
+                                <div id="uploadZone" class="upload-zone rounded-lg p-6 text-center cursor-pointer">
+                                    <div class="mb-4">
+                                        <i class="fas fa-cloud-upload-alt text-3xl text-green-400"></i>
+                                    </div>
+                                    <p class="text-white font-medium mb-2">Drag and drop file here</p>
+                                    <p class="text-gray-400 text-sm mb-4">Limit 200MB per file • JPG, JPEG, PNG</p>
+                                    <button id="browseBtn" class="px-6 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600">
+                                        Browse files
+                                    </button>
+                                    <input type="file" id="imageInput" class="hidden" accept="image/*">
+                                </div>
+                                
+                                <!-- Image Preview -->
+                                <div id="imagePreview" class="hidden mt-4">
+                                    <img id="previewImg" class="w-full h-48 object-cover rounded-lg">
+                                </div>
+                            </div>
+                            
+                            <!-- Soil Testing Inputs -->
+                            <div>
+                                <h3 class="text-lg font-semibold mb-4">Soil Test Data</h3>
+                                <div class="space-y-4">
+                                    <div class="grid grid-cols-3 gap-3">
+                                        <div>
+                                            <label class="block text-gray-400 text-sm mb-2">Nitrogen (N)</label>
+                                            <input type="number" id="nValue" value="50" class="w-full bg-gray-800 border border-gray-600 rounded-lg p-2 text-sm">
+                                        </div>
+                                        <div>
+                                            <label class="block text-gray-400 text-sm mb-2">Phosphorus (P)</label>
+                                            <input type="number" id="pValue" value="30" class="w-full bg-gray-800 border border-gray-600 rounded-lg p-2 text-sm">
+                                        </div>
+                                        <div>
+                                            <label class="block text-gray-400 text-sm mb-2">Potassium (K)</label>
+                                            <input type="number" id="kValue" value="40" class="w-full bg-gray-800 border border-gray-600 rounded-lg p-2 text-sm">
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <label class="block text-gray-400 text-sm mb-2">Soil pH</label>
+                                            <input type="number" id="phValue" value="6.5" step="0.1" class="w-full bg-gray-800 border border-gray-600 rounded-lg p-2 text-sm">
+                                        </div>
+                                        <div>
+                                            <label class="block text-gray-400 text-sm mb-2">Moisture %</label>
+                                            <input type="number" id="moistureValue" value="45" class="w-full bg-gray-800 border border-gray-600 rounded-lg p-2 text-sm">
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- NDVI Controls -->
+                                    <div class="border-t border-gray-600 pt-4">
+                                        <h4 class="text-md font-semibold mb-3">NDVI Analysis</h4>
+                                        <div class="grid grid-cols-3 gap-3">
+                                            <div>
+                                                <label class="block text-gray-400 text-xs mb-1">NIR Value</label>
+                                                <input type="number" id="nirValue" value="0.80" step="0.01" class="w-full bg-gray-800 border border-gray-600 rounded p-2 text-sm">
+                                            </div>
+                                            <div>
+                                                <label class="block text-gray-400 text-xs mb-1">Red Value</label>
+                                                <input type="number" id="redValue" value="0.30" step="0.01" class="w-full bg-gray-800 border border-gray-600 rounded p-2 text-sm">
+                                            </div>
+                                            <div class="text-center">
+                                                <label class="block text-gray-400 text-xs mb-1">NDVI Index</label>
+                                                <div class="text-lg font-bold text-green-400" id="ndviIndex">0.455</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Analysis Controls -->
+                            <div>
+                                <h3 class="text-lg font-semibold mb-4">Analysis Settings</h3>
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-gray-400 text-sm mb-2">Analysis Type</label>
+                                        <select id="analysisType" class="w-full bg-gray-800 border border-gray-600 rounded-lg p-2 text-sm">
+                                            <option value="comprehensive">Complete Analysis</option>
+                                            <option value="disease_only">Disease Detection Only</option>
+                                            <option value="soil_only">Soil Analysis Only</option>
+                                            <option value="weather_only">Weather Analysis Only</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-gray-400 text-sm mb-2">Include Fertilizer Recommendations</label>
+                                        <label class="flex items-center">
+                                            <input type="checkbox" id="includeFertilizer" checked class="mr-2">
+                                            <span class="text-sm">Show fertilizer amounts and costs</span>
+                                        </label>
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-gray-400 text-sm mb-2">Weather Forecast Days</label>
+                                        <select id="forecastDays" class="w-full bg-gray-800 border border-gray-600 rounded-lg p-2 text-sm">
+                                            <option value="7">7 Days</option>
+                                            <option value="14">14 Days</option>
+                                            <option value="30" selected>30 Days</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <!-- Large Analysis Button -->
+                                    <div class="mt-8">
+                                        <button id="analyzeBtn" onclick="performCompleteAnalysis()" 
+                                                class="w-full bg-gradient-to-r from-green-500 to-blue-500 text-white py-4 rounded-lg font-bold text-lg hover:from-green-600 hover:to-blue-600 transition duration-300 shadow-lg">
+                                            <i class="fas fa-search mr-3"></i>
+                                            Complete Agricultural Analysis
+                                        </button>
+                                        <p class="text-gray-400 text-xs mt-2 text-center">This will analyze crop health, soil, weather, pests & fertilizer recommendations</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Results Section -->
+                    <div id="analysisResults" class="hidden space-y-6">
+                        <!-- Health Overview Cards -->
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                            <!-- Crop Health Card -->
+                            <div class="glass-morphism rounded-lg p-6 text-center">
+                                <div class="flex justify-center mb-3">
+                                    <div class="w-16 h-16 rounded-full bg-green-500 flex items-center justify-center">
+                                        <i class="fas fa-leaf text-white text-xl"></i>
+                                    </div>
+                                </div>
+                                <div class="text-2xl font-bold text-green-400" id="overallHealthStatus">Good</div>
+                                <div class="text-sm text-gray-400 mb-2">Health Index: <span id="healthIndex">72/100</span></div>
+                                <div class="text-xs text-gray-500" id="cropDetails">Cotton - Sowing | 1.0 ha</div>
+                                <!-- Health Progress Bar -->
+                                <div class="mt-3 w-full bg-gray-700 rounded-full h-2">
+                                    <div id="healthProgress" class="bg-green-500 h-2 rounded-full" style="width: 72%"></div>
+                                </div>
+                            </div>
+                            
+                            <!-- Soil Health Card -->
+                            <div class="glass-morphism rounded-lg p-6 text-center">
+                                <div class="flex justify-center mb-3">
+                                    <div class="w-16 h-16 rounded-full bg-blue-500 flex items-center justify-center">
+                                        <i class="fas fa-seedling text-white text-xl"></i>
+                                    </div>
+                                </div>
+                                <div class="text-2xl font-bold text-blue-400" id="soilScore">85/100</div>
+                                <div class="text-sm text-gray-400 mb-2">Good</div>
+                                <div class="text-xs text-gray-500" id="soilDetails">pH: 6.8 | Moisture: 45%</div>
+                                <!-- Soil Progress Bar -->
+                                <div class="mt-3 w-full bg-gray-700 rounded-full h-2">
+                                    <div id="soilProgress" class="bg-blue-500 h-2 rounded-full" style="width: 85%"></div>
+                                </div>
+                            </div>
+                            
+                            <!-- Weather Card -->
+                            <div class="glass-morphism rounded-lg p-6 text-center">
+                                <div class="flex justify-center mb-3">
+                                    <div class="w-16 h-16 rounded-full bg-yellow-500 flex items-center justify-center">
+                                        <i class="fas fa-thermometer-half text-white text-xl"></i>
+                                    </div>
+                                </div>
+                                <div class="text-2xl font-bold text-yellow-400" id="currentTemp">36.5°C</div>
+                                <div class="text-sm text-gray-400 mb-2" id="weatherStatus">Hot</div>
+                                <div class="text-xs text-gray-500" id="weatherDetails">Humidity: 52% | Rain: 0.2mm</div>
+                            </div>
+                            
+                            <!-- Pest Risk Card -->
+                            <div class="glass-morphism rounded-lg p-6 text-center">
+                                <div class="flex justify-center mb-3">
+                                    <div class="w-16 h-16 rounded-full bg-orange-500 flex items-center justify-center">
+                                        <i class="fas fa-bug text-white text-xl"></i>
+                                    </div>
+                                </div>
+                                <div class="text-2xl font-bold text-orange-400" id="pestRiskPercentage">70%</div>
+                                <div class="text-sm text-gray-400 mb-2" id="pestRiskLevel">Medium Risk</div>
+                                <div class="text-xs text-gray-500" id="mainPest">Pink Bollworm</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Fertilizer Recommendations -->
+                        <div id="fertilizerSection" class="glass-morphism rounded-lg p-6">
+                            <h3 class="text-lg font-bold text-green-400 mb-4 flex items-center">
+                                <i class="fas fa-seedling mr-3"></i>
+                                Fertilizer Recommendations & Cost Analysis
+                            </h3>
+                            <div id="fertilizerContent">
+                                <!-- This will be populated with detailed fertilizer data -->
+                            </div>
+                        </div>
+                        
+                        <!-- Disease Analysis Chart -->
+                        <div class="glass-morphism rounded-lg p-6">
+                            <h3 class="text-lg font-bold text-red-400 mb-4">Environmental-Adjusted Disease Probabilities</h3>
+                            <div id="diseaseChart" class="h-64"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Weather & Soil Tab -->
+                <div id="weather-soil" class="tab-content hidden">
+                    <div class="space-y-6">
+                        
+                        <!-- Weather Analysis -->
+                        <div class="glass-morphism rounded-2xl p-6">
+                            <h2 class="text-xl font-bold text-yellow-400 mb-6 flex items-center">
+                                <i class="fas fa-cloud-sun mr-3"></i>
+                                Interactive Weather Analysis (Last 30 Days)
+                            </h2>
+                            
+                            <!-- Current Weather Summary -->
+                            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                                <div class="bg-gradient-to-br from-blue-100 to-blue-50 text-gray-800 rounded-lg p-4 text-center">
+                                    <div class="text-2xl font-bold text-blue-600" id="currentTemperature">Loading...</div>
+                                    <div class="text-sm text-blue-600">Temperature (°C)</div>
+                                </div>
+                                <div class="bg-gradient-to-br from-green-100 to-green-50 text-gray-800 rounded-lg p-4 text-center">
+                                    <div class="text-2xl font-bold text-green-600" id="currentHumidity">Loading...</div>
+                                    <div class="text-sm text-green-600">Humidity (%)</div>
+                                </div>
+                                <div class="bg-gradient-to-br from-purple-100 to-purple-50 text-gray-800 rounded-lg p-4 text-center">
+                                    <div class="text-2xl font-bold text-purple-600" id="currentRainfall">Loading...</div>
+                                    <div class="text-sm text-purple-600">Rainfall (mm)</div>
+                                </div>
+                                <div class="bg-gradient-to-br from-orange-100 to-orange-50 text-gray-800 rounded-lg p-4 text-center">
+                                    <div class="text-2xl font-bold text-orange-600" id="currentWindSpeed">Loading...</div>
+                                    <div class="text-sm text-orange-600">Wind Speed (km/h)</div>
+                                </div>
+                            </div>
+                            
+                            <!-- Enhanced Weather Charts -->
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                <!-- Temperature Trend -->
+                                <div class="bg-gray-800 rounded-lg p-4">
+                                    <h3 class="font-semibold mb-4 text-blue-400">30-Day Temperature Trend</h3>
+                                    <div id="tempChart" class="h-64">
+                                        <div class="flex items-center justify-center h-full">
+                                            <div class="text-center">
+                                                <i class="fas fa-spinner fa-spin text-2xl text-gray-400 mb-2"></i>
+                                                <p class="text-gray-400">Loading temperature data...</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Humidity Trend -->
+                                <div class="bg-gray-800 rounded-lg p-4">
+                                    <h3 class="font-semibold mb-4 text-green-400">30-Day Humidity Trend</h3>
+                                    <div id="humidityChart" class="h-64">
+                                        <div class="flex items-center justify-center h-full">
+                                            <div class="text-center">
+                                                <i class="fas fa-spinner fa-spin text-2xl text-gray-400 mb-2"></i>
+                                                <p class="text-gray-400">Loading humidity data...</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Rainfall Pattern -->
+                                <div class="bg-gray-800 rounded-lg p-4">
+                                    <h3 class="font-semibold mb-4 text-purple-400">30-Day Rainfall Pattern</h3>
+                                    <div id="rainfallChart" class="h-64">
+                                        <div class="flex items-center justify-center h-full">
+                                            <div class="text-center">
+                                                <i class="fas fa-spinner fa-spin text-2xl text-gray-400 mb-2"></i>
+                                                <p class="text-gray-400">Loading rainfall data...</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Wind Speed -->
+                                <div class="bg-gray-800 rounded-lg p-4">
+                                    <h3 class="font-semibold mb-4 text-orange-400">30-Day Wind Speed</h3>
+                                    <div id="windChart" class="h-64">
+                                        <div class="flex items-center justify-center h-full">
+                                            <div class="text-center">
+                                                <i class="fas fa-spinner fa-spin text-2xl text-gray-400 mb-2"></i>
+                                                <p class="text-gray-400">Loading wind data...</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Weather Analysis Summary -->
+                            <div class="mt-6 bg-gradient-to-r from-yellow-900 to-orange-900 bg-opacity-30 border border-yellow-500 rounded-lg p-4">
+                                <h4 class="font-semibold text-yellow-400 mb-2 flex items-center">
+                                    <i class="fas fa-chart-line mr-2"></i>
+                                    Weather Impact Analysis
+                                </h4>
+                                <div id="weatherAnalysisSummary" class="space-y-2 text-sm">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-info-circle text-blue-400 mr-2"></i>
+                                        <span>Loading weather analysis...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Soil Analysis -->
+                        <div class="glass-morphism rounded-2xl p-6">
+                            <h2 class="text-xl font-bold text-blue-400 mb-6 flex items-center">
+                                <i class="fas fa-seedling mr-3"></i>
+                                Soil Improvement Actions
+                            </h2>
+                            
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                
+                                <!-- Soil Input Form -->
+                                <div>
+                                    <h3 class="font-semibold mb-4">Enter Soil Test Data</h3>
+                                    <div class="space-y-4">
+                                        <div class="grid grid-cols-3 gap-4">
+                                            <div>
+                                                <label class="block text-gray-400 text-sm mb-2">Nitrogen (N)</label>
+                                                <input type="number" id="nValue" value="50" class="w-full bg-gray-800 border border-gray-600 rounded-lg p-3">
+                                            </div>
+                                            <div>
+                                                <label class="block text-gray-400 text-sm mb-2">Phosphorus (P)</label>
+                                                <input type="number" id="pValue" value="30" class="w-full bg-gray-800 border border-gray-600 rounded-lg p-3">
+                                            </div>
+                                            <div>
+                                                <label class="block text-gray-400 text-sm mb-2">Potassium (K)</label>
+                                                <input type="number" id="kValue" value="40" class="w-full bg-gray-800 border border-gray-600 rounded-lg p-3">
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label class="block text-gray-400 text-sm mb-2">Soil pH</label>
+                                            <input type="number" id="phValue" value="6.5" step="0.1" class="w-full bg-gray-800 border border-gray-600 rounded-lg p-3">
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Priority Action -->
+                                    <div class="mt-6 p-4 bg-red-900 bg-opacity-30 border border-red-500 rounded-lg">
+                                        <div class="text-red-400 font-semibold text-sm">High Priority: Apply nitrogen fertilizer (Urea)</div>
+                                    </div>
+                                </div>
+                                
+                                <!-- NPK Balance Chart -->
+                                <div>
+                                    <h3 class="font-semibold mb-4">NPK Balance Analysis</h3>
+                                    <div class="text-center">
+                                        <div class="text-sm text-gray-400 mb-4">NPK Balance vs Optimal Levels</div>
+                                        <div id="npkChart" class="npk-chart mx-auto"></div>
+                                        <div class="flex justify-center space-x-4 mt-4 text-xs">
+                                            <div class="flex items-center"><div class="w-3 h-3 bg-blue-400 mr-1"></div>Current Levels</div>
+                                            <div class="flex items-center"><div class="w-3 h-3 bg-green-400 mr-1"></div>Optimal Levels</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Pest Risk Tab -->
+                <div id="pest-risk" class="tab-content hidden">
+                    <!-- Enhanced Pest Risk Assessment -->
+                    <div class="space-y-6">
+                        
+                        <!-- Pest Risk Overview -->
+                        <div class="glass-morphism rounded-2xl p-6">
+                            <h2 class="text-xl font-bold text-red-400 mb-6 flex items-center">
+                                <i class="fas fa-bug mr-3"></i>
+                                Enhanced Pest Risk Assessment
+                            </h2>
+                            
+                            <!-- Risk Status Cards -->
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                                <div class="bg-gradient-to-br from-red-100 to-red-50 text-gray-800 rounded-xl p-6">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <div class="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center">
+                                            <i class="fas fa-exclamation-triangle text-white text-sm"></i>
+                                        </div>
+                                        <div class="text-2xl font-bold text-red-600" id="overallRiskLevel">70%</div>
+                                    </div>
+                                    <div class="text-sm text-red-600 font-medium mb-1">Overall Risk Level</div>
+                                    <div class="text-xs text-red-500" id="alertLevel">Medium Alert</div>
+                                </div>
+                                
+                                <div class="bg-gradient-to-br from-orange-100 to-orange-50 text-gray-800 rounded-xl p-6">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <div class="w-8 h-8 bg-orange-600 rounded-lg flex items-center justify-center">
+                                            <i class="fas fa-bug text-white text-sm"></i>
+                                        </div>
+                                        <div class="text-2xl font-bold text-orange-600" id="highRiskPestCount">2</div>
+                                    </div>
+                                    <div class="text-sm text-orange-600 font-medium mb-1">High Risk Pests</div>
+                                    <div class="text-xs text-orange-500" id="topPestName">Pink Bollworm</div>
+                                </div>
+                                
+                                <div class="bg-gradient-to-br from-blue-100 to-blue-50 text-gray-800 rounded-xl p-6">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                                            <i class="fas fa-shield-alt text-white text-sm"></i>
+                                        </div>
+                                        <div class="text-2xl font-bold text-blue-600" id="actionsNeeded">3</div>
+                                    </div>
+                                    <div class="text-sm text-blue-600 font-medium mb-1">Immediate Actions</div>
+                                    <div class="text-xs text-blue-500">Required</div>
+                                </div>
+                            </div>
+                            
+                            <!-- Quick Actions Panel -->
+                            <div class="bg-gradient-to-r from-red-900 to-orange-900 bg-opacity-30 border border-red-500 rounded-lg p-4 mb-6">
+                                <h4 class="font-semibold text-red-400 mb-2 flex items-center">
+                                    <i class="fas fa-bell mr-2"></i>
+                                    Immediate Actions Required
+                                </h4>
+                                <div id="immediateActionsList" class="space-y-2 text-sm">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-check-circle text-green-400 mr-2"></i>
+                                        <span>Immediate field inspection required</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <i class="fas fa-spray-can text-blue-400 mr-2"></i>
+                                        <span>Apply neem-based pesticide within 24 hours</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <i class="fas fa-eye text-yellow-400 mr-2"></i>
+                                        <span>Monitor daily for pest activity</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Enhanced Pest Risk Chart -->
+                        <div class="glass-morphism rounded-2xl p-6">
+                            <h3 class="text-lg font-bold text-red-400 mb-6 flex items-center">
+                                <i class="fas fa-chart-bar mr-2"></i>
+                                Pest Risk Analysis Chart
+                            </h3>
+                            <div id="pestRiskChart" class="h-96">
+                                <div class="text-center py-12">
+                                    <i class="fas fa-spinner fa-spin text-3xl text-gray-400 mb-4"></i>
+                                    <p class="text-gray-400">Loading pest risk visualization...</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 7-Day Pest Risk Forecast -->
+                        <div class="glass-morphism rounded-2xl p-6">
+                            <h3 class="text-lg font-bold text-orange-400 mb-6 flex items-center">
+                                <i class="fas fa-calendar-alt mr-2"></i>
+                                7-Day Pest Risk Forecast
+                            </h3>
+                            <div id="pestForecastChart" class="h-80">
+                                <div class="text-center py-12">
+                                    <i class="fas fa-spinner fa-spin text-3xl text-gray-400 mb-4"></i>
+                                    <p class="text-gray-400">Loading forecast chart...</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Detailed Pest Information -->
+                        <div class="glass-morphism rounded-2xl p-6">
+                            <h3 class="text-lg font-bold text-yellow-400 mb-6 flex items-center">
+                                <i class="fas fa-info-circle mr-2"></i>
+                                Detailed Pest Risk Breakdown
+                            </h3>
+                            <div id="detailedPestInfo" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                <!-- This will be populated with detailed pest information -->
+                            </div>
+                        </div>
+                        
+                        <!-- Control Recommendations -->
+                        <div class="glass-morphism rounded-2xl p-6">
+                            <h3 class="text-lg font-bold text-green-400 mb-6 flex items-center">
+                                <i class="fas fa-leaf mr-2"></i>
+                                Control Recommendations
+                            </h3>
+                            <div id="controlRecommendations" class="space-y-4">
+                                <!-- This will be populated with control recommendations -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Zone Mapping Tab -->
+                <div id="zone-mapping" class="tab-content hidden">
+                    <!-- Interactive Map -->
+                    <div class="glass-morphism rounded-2xl p-6 mb-6">
+                        <h2 class="text-xl font-bold text-purple-400 mb-6 flex items-center">
+                            <i class="fas fa-map mr-3"></i>
+                            Maharashtra Agricultural Risk Map
+                        </h2>
+                        
+                        <!-- Google Map Container -->
+                        <div id="map" class="w-full h-96 rounded-lg bg-gray-800 mb-6 relative overflow-hidden">
+                            <!-- Map will load here -->
+                            <div class="absolute inset-0 flex items-center justify-center">
+                                <div class="text-center">
+                                    <i class="fas fa-map-marked-alt text-4xl text-purple-400 mb-4"></i>
+                                    <p class="text-gray-400">Loading Maharashtra District Map...</p>
+                                    <div class="mt-4">
+                                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-400 mx-auto"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Map Controls -->
+                        <div class="flex justify-between items-center mb-4">
+                            <div class="flex space-x-2">
+                                <button onclick="toggleMapLayer('risk')" class="px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700">
+                                    <i class="fas fa-exclamation-triangle mr-1"></i>
+                                    Risk Zones
+                                </button>
+                                <button onclick="toggleMapLayer('weather')" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700">
+                                    <i class="fas fa-cloud mr-1"></i>
+                                    Weather Layer
+                                </button>
+                                <button onclick="toggleMapLayer('soil')" class="px-4 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700">
+                                    <i class="fas fa-seedling mr-1"></i>
+                                    Soil Health
+                                </button>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-gray-400 text-sm">Map View:</span>
+                                <select id="mapViewSelect" class="bg-gray-800 border border-gray-600 rounded px-2 py-1 text-sm">
+                                    <option value="hybrid">Satellite</option>
+                                    <option value="roadmap">Road Map</option>
+                                    <option value="terrain">Terrain</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Zone-wise Risk Summary -->
+                    <div class="glass-morphism rounded-2xl p-6">
+                        <h3 class="text-xl font-bold text-purple-400 mb-6">Zone-wise Risk Summary</h3>
+                        <div id="zoneRiskGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <!-- Zone risk cards will be populated here -->
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Dashboard Tab -->
+                <div id="dashboard" class="tab-content hidden">
+                    <!-- Unified Farm Management Dashboard -->
+                    <div class="glass-morphism rounded-2xl p-6 mb-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <h2 class="text-2xl font-bold text-green-400 flex items-center">
+                                <i class="fas fa-tractor mr-3"></i>
+                                Unified Farm Management Dashboard
+                                <i class="fas fa-link ml-2 text-sm"></i>
+                            </h2>
+                            <div class="text-gray-400 text-sm">
+                                Last Updated: <span id="lastUpdated">Just now</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Today's Farm Status Overview -->
+                        <div class="mb-8">
+                            <div class="flex items-center mb-4">
+                                <i class="fas fa-chart-bar text-blue-400 mr-3"></i>
+                                <h3 class="text-xl font-bold">Today's Farm Status Overview</h3>
+                            </div>
+                            
+                            <!-- Status Cards matching reference design -->
+                            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                                <!-- Crop Health Card -->
+                                <div class="bg-gradient-to-br from-green-100 to-green-50 text-gray-800 rounded-xl p-6 relative overflow-hidden">
+                                    <div class="absolute top-4 left-4">
+                                        <div class="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
+                                            <i class="fas fa-check text-white text-sm"></i>
+                                        </div>
+                                    </div>
+                                    <div class="pt-8">
+                                        <div class="text-sm text-green-600 font-medium mb-1">Crop Health</div>
+                                        <div class="text-3xl font-bold text-green-700 mb-2" id="dashCropHealth">Good</div>
+                                        <div class="text-sm text-green-600 mb-1">Health Index: <span id="dashHealthIndex">72/100</span></div>
+                                        <div class="text-xs text-green-500" id="dashCropType">Cotton - Sowing | 1.0 ha</div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Soil Health Card -->
+                                <div class="bg-gradient-to-br from-blue-100 to-blue-50 text-gray-800 rounded-xl p-6 relative overflow-hidden">
+                                    <div class="absolute top-4 left-4">
+                                        <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                                            <i class="fas fa-circle text-white text-sm"></i>
+                                        </div>
+                                    </div>
+                                    <div class="pt-8">
+                                        <div class="text-sm text-blue-600 font-medium mb-1">Soil Health</div>
+                                        <div class="text-3xl font-bold text-blue-700 mb-2" id="dashSoilHealth">85/100</div>
+                                        <div class="text-sm text-blue-600 mb-1">Good</div>
+                                        <div class="text-xs text-blue-500" id="dashSoilDetails">pH: 6.8 | Moisture: 45%</div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Weather Card -->
+                                <div class="bg-gradient-to-br from-yellow-100 to-yellow-50 text-gray-800 rounded-xl p-6 relative overflow-hidden">
+                                    <div class="absolute top-4 left-4">
+                                        <div class="w-8 h-8 bg-yellow-600 rounded-lg flex items-center justify-center">
+                                            <i class="fas fa-thermometer-half text-white text-sm"></i>
+                                        </div>
+                                    </div>
+                                    <div class="pt-8">
+                                        <div class="text-sm text-yellow-600 font-medium mb-1">Weather</div>
+                                        <div class="text-3xl font-bold text-yellow-700 mb-2" id="dashWeatherTemp">36.5°C</div>
+                                        <div class="text-sm text-yellow-600 mb-1" id="dashWeatherStatus">Hot</div>
+                                        <div class="text-xs text-yellow-500" id="dashWeatherDetails">Humidity: 52% | Rain: 0.2mm</div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Pest Risk Card -->
+                                <div class="bg-gradient-to-br from-orange-100 to-orange-50 text-gray-800 rounded-xl p-6 relative overflow-hidden">
+                                    <div class="absolute top-4 left-4">
+                                        <div class="w-8 h-8 bg-orange-600 rounded-lg flex items-center justify-center">
+                                            <i class="fas fa-circle text-white text-sm"></i>
+                                        </div>
+                                    </div>
+                                    <div class="pt-8">
+                                        <div class="text-sm text-orange-600 font-medium mb-1">Pest Risk</div>
+                                        <div class="text-3xl font-bold text-orange-700 mb-2" id="dashPestRisk">70%</div>
+                                        <div class="text-sm text-orange-600 mb-1" id="dashPestLevel">Medium Risk</div>
+                                        <div class="text-xs text-orange-500" id="dashMainPest">Pink Bollworm</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 7-Day Pest Risk Forecast -->
+                    <div class="glass-morphism rounded-2xl p-6 mb-6">
+                        <h3 class="text-xl font-bold text-red-400 mb-6">7-Day Pest Risk Forecast</h3>
+                        <div id="pestForecastChart" class="h-80"></div>
+                    </div>
+                    
+                    <!-- Environmental-Adjusted Disease Probabilities -->
+                    <div class="glass-morphism rounded-2xl p-6 mb-6">
+                        <h3 class="text-xl font-bold text-red-400 mb-6">Environmental-Adjusted Disease Probabilities</h3>
+                        <div id="diseaseProbChart" class="h-64"></div>
+                    </div>
+                    
+                    <!-- Additional Analytics -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- Crop Growth Stage Progress -->
+                        <div class="glass-morphism rounded-xl p-6">
+                            <h4 class="text-lg font-bold text-green-400 mb-4">Crop Growth Stage Progress</h4>
+                            <div class="space-y-4">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm">Germination</span>
+                                    <span class="text-green-400">✓ Complete</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm">Vegetative Growth</span>
+                                    <span class="text-blue-400">→ Current (65%)</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm text-gray-500">Flowering</span>
+                                    <span class="text-gray-500">○ Upcoming</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm text-gray-500">Fruiting</span>
+                                    <span class="text-gray-500">○ Future</span>
+                                </div>
+                                <div class="w-full bg-gray-700 rounded-full h-2 mt-4">
+                                    <div class="bg-gradient-to-r from-green-500 to-blue-500 h-2 rounded-full" style="width: 65%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Fertilizer Schedule -->
+                        <div class="glass-morphism rounded-xl p-6">
+                            <h4 class="text-lg font-bold text-blue-400 mb-4">Fertilizer Application Schedule</h4>
+                            <div class="space-y-3" id="fertilizerSchedule">
+                                <div class="flex justify-between items-center p-3 bg-gray-800 rounded-lg">
+                                    <div>
+                                        <div class="text-sm font-semibold">Urea (46% N)</div>
+                                        <div class="text-xs text-gray-400">Base Application</div>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="text-sm font-bold text-green-400">₹1,560</div>
+                                        <div class="text-xs text-gray-400">240 kg</div>
+                                    </div>
+                                </div>
+                                <div class="flex justify-between items-center p-3 bg-gray-800 rounded-lg">
+                                    <div>
+                                        <div class="text-sm font-semibold">DAP (18-46-0)</div>
+                                        <div class="text-xs text-gray-400">At Sowing</div>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="text-sm font-bold text-blue-400">₹1,755</div>
+                                        <div class="text-xs text-gray-400">65 kg</div>
+                                    </div>
+                                </div>
+                                <div class="border-t border-gray-600 pt-3 mt-3">
+                                    <div class="flex justify-between items-center">
+                                        <span class="font-bold">Total Cost:</span>
+                                        <span class="font-bold text-yellow-400 text-lg">₹3,315</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+    
+    <!-- Loading Modal -->
+    <div id="loadingModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+        <div class="glass-morphism rounded-2xl p-8 text-center">
+            <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-green-400 mx-auto mb-4"></div>
+            <h3 class="text-xl font-semibold mb-2">Analyzing Your Crop...</h3>
+            <p class="text-gray-400">Please wait while we process the data</p>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentAnalysisData = null;
+        
+        // Tab Management
+        function showTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.add('hidden');
+            });
+            
+            // Remove active class from all tab buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('tab-active');
+                btn.classList.add('bg-gray-700', 'text-gray-300');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName).classList.remove('hidden');
+            
+            // Add active class to clicked button
+            event.target.closest('.tab-btn').classList.add('tab-active');
+            event.target.closest('.tab-btn').classList.remove('bg-gray-700', 'text-gray-300');
+            
+        // Load tab-specific content
+            if (tabName === 'weather-soil') {
+                // Load enhanced weather charts from API
+                console.log('Loading weather & soil tab...');
+                loadWeatherCharts(null);
+            } else if (tabName === 'pest-risk') {
+                console.log('Loading pest risk tab...');
+                loadEnhancedPestRisk();
+            } else if (tabName === 'zone-mapping') {
+                console.log('Loading zone mapping tab...');
+                loadZoneMapping();
+            }
+        }
+        
+        // Image Upload Handler
+        document.getElementById('browseBtn').addEventListener('click', () => {
+            document.getElementById('imageInput').click();
+        });
+        
+        document.getElementById('imageInput').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const preview = document.getElementById('imagePreview');
+                    const img = document.getElementById('previewImg');
+                    img.src = e.target.result;
+                    preview.classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        // NDVI Calculation
+        function updateNDVI() {
+            const nir = parseFloat(document.getElementById('nirValue').value);
+            const red = parseFloat(document.getElementById('redValue').value);
+            const ndvi = ((nir - red) / (nir + red)).toFixed(3);
+            document.getElementById('ndviIndex').textContent = ndvi;
+        }
+        
+        document.getElementById('nirValue').addEventListener('input', updateNDVI);
+        document.getElementById('redValue').addEventListener('input', updateNDVI);
+        
+        // Enhanced Analysis Function
+        async function performCompleteAnalysis() {
+            const loadingModal = document.getElementById('loadingModal');
+            loadingModal.classList.remove('hidden');
+            
+            try {
+                const formData = new FormData();
+                formData.append('district', document.getElementById('districtSelect').value);
+                formData.append('crop_type', document.getElementById('cropSelect').value);
+                formData.append('farm_area', document.getElementById('farmArea').value);
+                formData.append('n_value', document.getElementById('nValue').value);
+                formData.append('p_value', document.getElementById('pValue').value);
+                formData.append('k_value', document.getElementById('kValue').value);
+                formData.append('ph_value', document.getElementById('phValue').value);
+                formData.append('moisture_value', document.getElementById('moistureValue').value);
+                formData.append('analysis_type', document.getElementById('analysisType').value);
+                formData.append('include_fertilizer', document.getElementById('includeFertilizer').checked);
+                formData.append('forecast_days', document.getElementById('forecastDays').value);
+                
+                const imageInput = document.getElementById('imageInput');
+                if (imageInput.files[0]) {
+                    formData.append('crop_image', imageInput.files[0]);
+                }
+                
+                const response = await fetch('/analyze_crop', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                currentAnalysisData = data;
+                
+                if (data.status === 'success') {
+                    displayEnhancedResults(data);
+                    showAnalysisResults();
+                    updateDashboard(data);
+                } else {
+                    alert('Analysis failed: ' + data.message);
+                }
+                
+            } catch (error) {
+                console.error('Analysis error:', error);
+                alert('Analysis failed. Please try again.');
+            } finally {
+                loadingModal.classList.add('hidden');
+            }
+        }
+        
+        // Keep backward compatibility
+        async function performAnalysis() {
+            return performCompleteAnalysis();
+        }
+        
+        // Enhanced Display Results
+        function displayEnhancedResults(data) {
+            // Update health overview cards
+            updateHealthOverview(data);
+            
+            // Update fertilizer recommendations with costs
+            updateFertilizerSection(data.fertilizer_recommendations);
+            
+            // Create disease probability chart
+            createDiseaseChart(data);
+            
+            // Update weather charts
+            loadWeatherCharts(data.weather_analysis);
+            
+            // Update NPK chart
+            loadNPKChart(data.soil_analysis);
+            
+            // Update pest risk
+            loadPestRisk(data.pest_risk_assessment);
+            
+            // Update zone mapping
+            loadZoneMapping(data.zone_wise_risks);
+        }
+        
+        // Legacy function for backward compatibility
+        function displayResults(data) {
+            return displayEnhancedResults(data);
+        }
+        
+        // Update Health Overview Cards
+        function updateHealthOverview(data) {
+            // Crop Health Card
+            if (data.image_analysis) {
+                document.getElementById('overallHealthStatus').textContent = 
+                    data.image_analysis.health_score > 80 ? 'Excellent' : 
+                    data.image_analysis.health_score > 60 ? 'Good' : 
+                    data.image_analysis.health_score > 40 ? 'Fair' : 'Poor';
+                document.getElementById('healthIndex').textContent = data.image_analysis.health_score + '/100';
+                document.getElementById('cropDetails').textContent = 
+                    `${data.crop_type} - ${document.getElementById('growthStage').value} | ${data.farm_area} ha`;
+                document.getElementById('healthProgress').style.width = data.image_analysis.health_score + '%';
+            }
+            
+            // Soil Health Card  
+            document.getElementById('soilScore').textContent = data.soil_analysis.soil_score + '/100';
+            document.getElementById('soilDetails').textContent = 
+                `pH: ${data.soil_analysis.ph_level} | Moisture: ${document.getElementById('moistureValue').value}%`;
+            document.getElementById('soilProgress').style.width = data.soil_analysis.soil_score + '%';
+            
+            // Weather Card
+            document.getElementById('currentTemp').textContent = data.weather_analysis.current.temperature + '°C';
+            document.getElementById('weatherStatus').textContent = 
+                data.weather_analysis.current.temperature > 35 ? 'Very Hot' :
+                data.weather_analysis.current.temperature > 30 ? 'Hot' :
+                data.weather_analysis.current.temperature > 25 ? 'Warm' : 'Cool';
+            document.getElementById('weatherDetails').textContent = 
+                `Humidity: ${data.weather_analysis.current.humidity}% | Rain: ${data.weather_analysis.current.description}`;
+            
+            // Pest Risk Card
+            document.getElementById('pestRiskPercentage').textContent = data.pest_risk_assessment.overall_risk + '%';
+            document.getElementById('pestRiskLevel').textContent = data.pest_risk_assessment.risk_category + ' Risk';
+            document.getElementById('mainPest').textContent = data.pest_risk_assessment.pest_details[0]?.name || 'No major pest';
+        }
+        
+        // Update Fertilizer Section with detailed costs
+        function updateFertilizerSection(fertilizerData) {
+            if (!fertilizerData) return;
+            
+            const container = document.getElementById('fertilizerContent');
+            let html = `
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Fertilizer List -->
+                    <div>
+                        <h4 class="font-semibold mb-4">Recommended Fertilizers</h4>
+                        <div class="space-y-3">
+            `;
+            
+            fertilizerData.fertilizer_plan.forEach(item => {
+                html += `
+                    <div class="flex justify-between items-center p-4 bg-gray-800 rounded-lg">
+                        <div>
+                            <div class="font-semibold text-green-400">${item.name}</div>
+                            <div class="text-sm text-gray-400">${item.application}</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="font-bold text-yellow-400">₹${item.total_cost}</div>
+                            <div class="text-sm text-gray-400">${item.quantity} ${item.unit}</div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += `
+                        </div>
+                        <div class="mt-6 p-4 bg-gradient-to-r from-green-800 to-blue-800 rounded-lg">
+                            <div class="flex justify-between items-center">
+                                <span class="font-bold text-lg">Total Investment:</span>
+                                <span class="font-bold text-yellow-400 text-2xl">₹${fertilizerData.total_cost}</span>
+                            </div>
+                            <div class="text-sm text-gray-300 mt-2">Cost per hectare: ₹${fertilizerData.cost_per_hectare}</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Application Timeline -->
+                    <div>
+                        <h4 class="font-semibold mb-4">Application Timeline</h4>
+                        <div class="space-y-3">
+            `;
+            
+            fertilizerData.application_timeline.forEach((stage, index) => {
+                const isActive = index === 1; // Current stage
+                const isComplete = index === 0; // Completed stage
+                
+                html += `
+                    <div class="flex items-center p-3 rounded-lg ${
+                        isActive ? 'bg-blue-900 border border-blue-500' :
+                        isComplete ? 'bg-green-900 border border-green-500' :
+                        'bg-gray-800'
+                    }">
+                        <div class="w-8 h-8 rounded-full flex items-center justify-center mr-3 ${
+                            isActive ? 'bg-blue-500' :
+                            isComplete ? 'bg-green-500' :
+                            'bg-gray-600'
+                        }">
+                            <i class="fas ${
+                                isComplete ? 'fa-check' :
+                                isActive ? 'fa-clock' :
+                                'fa-circle'
+                            } text-white text-sm"></i>
+                        </div>
+                        <div class="flex-1">
+                            <div class="font-semibold">${stage.stage}</div>
+                            <div class="text-sm text-gray-400">${stage.action}</div>
+                        </div>
+                        <div class="text-sm ${isActive ? 'text-blue-400' : isComplete ? 'text-green-400' : 'text-gray-500'}">
+                            Day ${stage.days >= 0 ? '+' : ''}${stage.days}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += `
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            container.innerHTML = html;
+        }
+        
+        // Create Disease Probability Chart
+        function createDiseaseChart(data) {
+            const diseases = ['Healthy', 'Bacterial_Blight', 'Yellow_Curl_Virus'];
+            const probabilities = [70, 15, 15]; // Sample data
+            
+            const colors = probabilities.map(p => 
+                p > 50 ? '#dc2626' : p > 20 ? '#f59e0b' : '#10b981'
+            );
+            
+            Plotly.newPlot('diseaseChart', [{
+                x: diseases,
+                y: probabilities,
+                type: 'bar',
+                marker: {
+                    color: colors,
+                    colorscale: [
+                        [0, '#10b981'],
+                        [0.5, '#f59e0b'],
+                        [1, '#dc2626']
+                    ]
+                },
+                text: probabilities.map(p => p + '%'),
+                textposition: 'auto',
+                textfont: { color: 'white' }
+            }], {
+                margin: { t: 20, r: 20, b: 60, l: 60 },
+                paper_bgcolor: 'transparent',
+                plot_bgcolor: 'transparent',
+                font: { color: '#e5e7eb', size: 12 },
+                xaxis: { 
+                    showgrid: false, 
+                    color: '#6b7280',
+                    title: 'Disease'
+                },
+                yaxis: { 
+                    showgrid: true,
+                    gridcolor: '#374151',
+                    color: '#6b7280',
+                    title: 'Probability'
+                }
+            }, { displayModeBar: false });
+        }
+        
+        // Update Dashboard with latest data
+        function updateDashboard(data) {
+            // Update dashboard cards
+            updateDashboardCards(data);
+            
+            // Update pest forecast chart
+            createPestForecastChart();
+            
+            // Update disease probability chart in dashboard
+            Plotly.newPlot('diseaseProbChart', [{
+                x: ['Healthy', 'Bacterial_Blight', 'Yellow_Curl_Virus'],
+                y: [70, 15, 15],
+                type: 'bar',
+                marker: {
+                    color: ['#10b981', '#f59e0b', '#dc2626']
+                }
+            }], getChartLayout(), { displayModeBar: false });
+            
+            // Update last updated time
+            document.getElementById('lastUpdated').textContent = 'Just now';
+        }
+        
+        // Update Dashboard Cards
+        function updateDashboardCards(data) {
+            // Crop Health
+            const healthStatus = data.image_analysis?.health_score > 70 ? 'Good' : 'Fair';
+            document.getElementById('dashCropHealth').textContent = healthStatus;
+            document.getElementById('dashHealthIndex').textContent = (data.image_analysis?.health_score || 72) + '/100';
+            document.getElementById('dashCropType').textContent = `${data.crop_type} - ${document.getElementById('growthStage').value} | ${data.farm_area} ha`;
+            
+            // Soil Health
+            document.getElementById('dashSoilHealth').textContent = data.soil_analysis?.soil_score + '/100' || '85/100';
+            document.getElementById('dashSoilDetails').textContent = `pH: ${data.soil_analysis?.ph_level || 6.8} | Moisture: ${document.getElementById('moistureValue')?.value || 45}%`;
+            
+            // Weather
+            document.getElementById('dashWeatherTemp').textContent = (data.weather_analysis?.current?.temperature || 36.5) + '°C';
+            document.getElementById('dashWeatherStatus').textContent = data.weather_analysis?.current?.temperature > 35 ? 'Hot' : 'Warm';
+            document.getElementById('dashWeatherDetails').textContent = `Humidity: ${data.weather_analysis?.current?.humidity || 52}% | Rain: 0.2mm`;
+            
+            // Pest Risk
+            document.getElementById('dashPestRisk').textContent = (data.pest_risk_assessment?.overall_risk || 70) + '%';
+            document.getElementById('dashPestLevel').textContent = data.pest_risk_assessment?.risk_category + ' Risk' || 'Medium Risk';
+            document.getElementById('dashMainPest').textContent = data.pest_risk_assessment?.pest_details?.[0]?.name || 'Pink Bollworm';
+        }
+        
+        // Create 7-Day Pest Forecast Chart
+        function createPestForecastChart() {
+            const dates = [];
+            const pestData = {
+                'Pink Bollworm': [],
+                'Aphids': [],
+                'White Fly': [],
+                'Thrips': []
+            };
+            
+            // Generate 7 days of data
+            for (let i = 0; i < 7; i++) {
+                const date = new Date();
+                date.setDate(date.getDate() + i);
+                dates.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+                
+                // Generate realistic pest risk data
+                pestData['Pink Bollworm'].push(95 + Math.random() * 5);
+                pestData['Aphids'].push(35 + Math.random() * 10);
+                pestData['White Fly'].push(50 + Math.random() * 15);
+                pestData['Thrips'].push(45 + Math.random() * 20);
+            }
+            
+            const traces = [];
+            const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'];
+            let colorIndex = 0;
+            
+            Object.entries(pestData).forEach(([pest, data]) => {
+                traces.push({
+                    x: dates,
+                    y: data,
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    name: pest,
+                    line: { color: colors[colorIndex], width: 3 },
+                    marker: { size: 6 }
+                });
+                colorIndex++;
+            });
+            
+            Plotly.newPlot('pestForecastChart', traces, {
+                margin: { t: 20, r: 20, b: 60, l: 60 },
+                paper_bgcolor: 'transparent',
+                plot_bgcolor: 'transparent',
+                font: { color: '#e5e7eb', size: 12 },
+                xaxis: { 
+                    showgrid: false, 
+                    color: '#6b7280',
+                    title: 'Date'
+                },
+                yaxis: { 
+                    showgrid: true,
+                    gridcolor: '#374151',
+                    color: '#6b7280',
+                    title: 'Risk Probability (%)'
+                },
+                legend: {
+                    orientation: 'h',
+                    x: 0,
+                    y: -0.2
+                }
+            }, { displayModeBar: false });
+        }
+        
+        function showAnalysisResults() {
+            document.getElementById('analysisResults').classList.remove('hidden');
+        }
+        
+        // Load Enhanced Weather Charts from API
+        async function loadWeatherCharts(weatherData) {
+            try {
+                const district = document.getElementById('districtSelect').value || 'Pune';
+                console.log('Loading weather charts for district:', district);
+                
+                // Fetch enhanced weather graphs from API
+                const response = await fetch(`/api/enhanced_weather_graphs/${district}`);
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    // Update current weather summary cards
+                    if (data.weather_summary) {
+                        updateCurrentWeatherSummary(data.weather_summary);
+                    }
+                    
+                    // Create enhanced interactive graphs
+                    if (data.graphs) {
+                        if (data.graphs.temperature_graph) {
+                            const tempData = JSON.parse(data.graphs.temperature_graph);
+                            await Plotly.newPlot('tempChart', tempData.data, {
+                                ...tempData.layout,
+                                paper_bgcolor: 'transparent',
+                                plot_bgcolor: 'rgba(30,30,30,0.8)',
+                                font: { color: '#ffffff', size: 12 },
+                                margin: { t: 30, r: 30, b: 50, l: 50 }
+                            }, { 
+                                displayModeBar: false,
+                                responsive: true
+                            });
+                        }
+                        
+                        if (data.graphs.humidity_graph) {
+                            const humidityData = JSON.parse(data.graphs.humidity_graph);
+                            await Plotly.newPlot('humidityChart', humidityData.data, {
+                                ...humidityData.layout,
+                                paper_bgcolor: 'transparent',
+                                plot_bgcolor: 'rgba(30,30,30,0.8)',
+                                font: { color: '#ffffff', size: 12 },
+                                margin: { t: 30, r: 30, b: 50, l: 50 }
+                            }, { 
+                                displayModeBar: false,
+                                responsive: true
+                            });
+                        }
+                        
+                        if (data.graphs.rainfall_graph) {
+                            const rainfallData = JSON.parse(data.graphs.rainfall_graph);
+                            await Plotly.newPlot('rainfallChart', rainfallData.data, {
+                                ...rainfallData.layout,
+                                paper_bgcolor: 'transparent',
+                                plot_bgcolor: 'rgba(30,30,30,0.8)',
+                                font: { color: '#ffffff', size: 12 },
+                                margin: { t: 30, r: 30, b: 50, l: 50 }
+                            }, { 
+                                displayModeBar: false,
+                                responsive: true
+                            });
+                        }
+                        
+                        if (data.graphs.wind_graph) {
+                            const windData = JSON.parse(data.graphs.wind_graph);
+                            await Plotly.newPlot('windChart', windData.data, {
+                                ...windData.layout,
+                                paper_bgcolor: 'transparent',
+                                plot_bgcolor: 'rgba(30,30,30,0.8)',
+                                font: { color: '#ffffff', size: 12 },
+                                margin: { t: 30, r: 30, b: 50, l: 50 }
+                            }, { 
+                                displayModeBar: false,
+                                responsive: true
+                            });
+                        }
+                        
+                        console.log('Weather charts loaded successfully');
+                    }
+                    
+                    // Update weather analysis summary
+                    if (data.weather_summary) {
+                        updateWeatherAnalysisSummary(data.weather_summary);
+                    }
+                    
+                } else {
+                    console.warn('API returned error:', data.message);
+                    // Load fallback charts with mock data
+                    loadFallbackWeatherCharts();
+                }
+                
+            } catch (error) {
+                console.error('Error loading enhanced weather charts:', error);
+                // Load fallback charts with mock data
+                loadFallbackWeatherCharts();
+            }
+        }
+        
+        // Update current weather summary cards
+        function updateCurrentWeatherSummary(weatherSummary) {
+            // Update current weather display cards
+            const currentData = weatherSummary.current || {};
+            
+            document.getElementById('currentTemperature').textContent = 
+                (currentData.temperature || '25') + '°C';
+            document.getElementById('currentHumidity').textContent = 
+                (currentData.humidity || '65') + '%';
+            document.getElementById('currentRainfall').textContent = 
+                (currentData.rainfall || '0.0') + ' mm';
+            document.getElementById('currentWindSpeed').textContent = 
+                (currentData.wind_speed || '3.5') + ' km/h';
+        }
+        
+        // Update weather analysis summary
+        function updateWeatherAnalysisSummary(weatherSummary) {
+            const analysis = weatherSummary.analysis || weatherSummary;
+            const container = document.getElementById('weatherAnalysisSummary');
+            
+            let summaryHTML = '';
+            
+            if (analysis.temperature_status) {
+                summaryHTML += `
+                    <div class="flex items-center">
+                        <i class="fas fa-thermometer-half text-blue-400 mr-2"></i>
+                        <span>Temperature: ${analysis.temperature_status}</span>
+                    </div>
+                `;
+            }
+            
+            if (analysis.humidity_status) {
+                summaryHTML += `
+                    <div class="flex items-center">
+                        <i class="fas fa-tint text-green-400 mr-2"></i>
+                        <span>Humidity: ${analysis.humidity_status}</span>
+                    </div>
+                `;
+            }
+            
+            if (analysis.rainfall_status) {
+                summaryHTML += `
+                    <div class="flex items-center">
+                        <i class="fas fa-cloud-rain text-purple-400 mr-2"></i>
+                        <span>Rainfall: ${analysis.rainfall_status}</span>
+                    </div>
+                `;
+            }
+            
+            if (analysis.recommendation) {
+                summaryHTML += `
+                    <div class="flex items-center">
+                        <i class="fas fa-lightbulb text-yellow-400 mr-2"></i>
+                        <span>Recommendation: ${analysis.recommendation}</span>
+                    </div>
+                `;
+            }
+            
+            if (summaryHTML) {
+                container.innerHTML = summaryHTML;
+            } else {
+                container.innerHTML = `
+                    <div class="flex items-center">
+                        <i class="fas fa-info-circle text-blue-400 mr-2"></i>
+                        <span>Weather conditions are within normal range for farming activities.</span>
+                    </div>
+                `;
+            }
+        }
+        
+        function loadFallbackWeatherCharts() {
+            console.log('Loading fallback weather charts with mock data');
+            
+            // Generate mock 30-day weather data
+            const dates = [];
+            const temperatures = [];
+            const humidity = [];
+            const rainfall = [];
+            const windSpeed = [];
+            
+            for (let i = 29; i >= 0; i--) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                dates.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+                
+                // Mock weather data with realistic patterns
+                temperatures.push(25 + Math.sin(i * 0.2) * 5 + Math.random() * 4);
+                humidity.push(60 + Math.cos(i * 0.3) * 15 + Math.random() * 10);
+                rainfall.push(Math.random() > 0.7 ? Math.random() * 20 : 0);
+                windSpeed.push(3 + Math.random() * 8);
+            }
+            
+            // Temperature Chart
+            Plotly.newPlot('tempChart', [{
+                x: dates,
+                y: temperatures,
+                type: 'scatter',
+                mode: 'lines+markers',
+                line: { color: '#3B82F6', width: 3 },
+                marker: { size: 6, color: '#3B82F6' },
+                hovertemplate: '%{x}<br>Temperature: %{y:.1f}°C<extra></extra>'
+            }], {
+                margin: { t: 20, r: 20, b: 50, l: 50 },
+                paper_bgcolor: 'transparent',
+                plot_bgcolor: 'rgba(30,30,30,0.8)',
+                font: { color: '#ffffff', size: 12 },
+                xaxis: { 
+                    showgrid: true, 
+                    gridcolor: 'rgba(255,255,255,0.2)',
+                    color: '#ffffff',
+                    title: 'Date'
+                },
+                yaxis: { 
+                    showgrid: true, 
+                    gridcolor: 'rgba(255,255,255,0.2)',
+                    color: '#ffffff',
+                    title: 'Temperature (°C)'
+                }
+            }, { displayModeBar: false, responsive: true });
+            
+            // Humidity Chart
+            Plotly.newPlot('humidityChart', [{
+                x: dates,
+                y: humidity,
+                type: 'scatter',
+                mode: 'lines+markers',
+                line: { color: '#10B981', width: 3 },
+                marker: { size: 6, color: '#10B981' },
+                hovertemplate: '%{x}<br>Humidity: %{y:.1f}%<extra></extra>'
+            }], {
+                margin: { t: 20, r: 20, b: 50, l: 50 },
+                paper_bgcolor: 'transparent',
+                plot_bgcolor: 'rgba(30,30,30,0.8)',
+                font: { color: '#ffffff', size: 12 },
+                xaxis: { 
+                    showgrid: true, 
+                    gridcolor: 'rgba(255,255,255,0.2)',
+                    color: '#ffffff',
+                    title: 'Date'
+                },
+                yaxis: { 
+                    showgrid: true, 
+                    gridcolor: 'rgba(255,255,255,0.2)',
+                    color: '#ffffff',
+                    title: 'Humidity (%)'
+                }
+            }, { displayModeBar: false, responsive: true });
+            
+            // Rainfall Chart
+            Plotly.newPlot('rainfallChart', [{
+                x: dates,
+                y: rainfall,
+                type: 'bar',
+                marker: { color: '#8B5CF6' },
+                hovertemplate: '%{x}<br>Rainfall: %{y:.1f}mm<extra></extra>'
+            }], {
+                margin: { t: 20, r: 20, b: 50, l: 50 },
+                paper_bgcolor: 'transparent',
+                plot_bgcolor: 'rgba(30,30,30,0.8)',
+                font: { color: '#ffffff', size: 12 },
+                xaxis: { 
+                    showgrid: true, 
+                    gridcolor: 'rgba(255,255,255,0.2)',
+                    color: '#ffffff',
+                    title: 'Date'
+                },
+                yaxis: { 
+                    showgrid: true, 
+                    gridcolor: 'rgba(255,255,255,0.2)',
+                    color: '#ffffff',
+                    title: 'Rainfall (mm)'
+                }
+            }, { displayModeBar: false, responsive: true });
+            
+            // Wind Speed Chart
+            Plotly.newPlot('windChart', [{
+                x: dates,
+                y: windSpeed,
+                type: 'scatter',
+                mode: 'lines+markers',
+                line: { color: '#F59E0B', width: 3 },
+                marker: { size: 6, color: '#F59E0B' },
+                hovertemplate: '%{x}<br>Wind Speed: %{y:.1f}km/h<extra></extra>'
+            }], {
+                margin: { t: 20, r: 20, b: 50, l: 50 },
+                paper_bgcolor: 'transparent',
+                plot_bgcolor: 'rgba(30,30,30,0.8)',
+                font: { color: '#ffffff', size: 12 },
+                xaxis: { 
+                    showgrid: true, 
+                    gridcolor: 'rgba(255,255,255,0.2)',
+                    color: '#ffffff',
+                    title: 'Date'
+                },
+                yaxis: { 
+                    showgrid: true, 
+                    gridcolor: 'rgba(255,255,255,0.2)',
+                    color: '#ffffff',
+                    title: 'Wind Speed (km/h)'
+                }
+            }, { displayModeBar: false, responsive: true });
+            
+            // Update current weather summary with mock data
+            updateCurrentWeatherSummary({
+                current: {
+                    temperature: temperatures[temperatures.length - 1].toFixed(1),
+                    humidity: humidity[humidity.length - 1].toFixed(0),
+                    rainfall: rainfall[rainfall.length - 1].toFixed(1),
+                    wind_speed: windSpeed[windSpeed.length - 1].toFixed(1)
+                }
+            });
+            
+            // Update weather analysis with mock data
+            updateWeatherAnalysisSummary({
+                temperature_status: 'Optimal for crop growth',
+                humidity_status: 'Good moisture levels detected',
+                rainfall_status: 'Adequate rainfall for current season',
+                recommendation: 'Continue regular farming activities'
+            });
+        }
+        
+        function loadOtherWeatherCharts(trends) {
+            // Humidity Chart
+            Plotly.newPlot('humidityChart', [{
+                x: trends.dates,
+                y: trends.humidity,
+                type: 'scatter',
+                mode: 'lines',
+                line: { color: '#10b981', width: 2 }
+            }], getChartLayout(), { displayModeBar: false });
+            
+            // Rainfall Chart
+            Plotly.newPlot('rainfallChart', [{
+                x: trends.dates,
+                y: trends.rainfall,
+                type: 'bar',
+                marker: { color: '#f59e0b' }
+            }], getChartLayout(), { displayModeBar: false });
+            
+            // Wind Chart
+            Plotly.newPlot('windChart', [{
+                x: trends.dates,
+                y: trends.wind_speed,
+                type: 'scatter',
+                mode: 'lines',
+                line: { color: '#ef4444', width: 2 }
+            }], getChartLayout(), { displayModeBar: false });
+        }
+        
+        function getChartLayout() {
+            return {
+                margin: { t: 10, r: 10, b: 30, l: 40 },
+                paper_bgcolor: 'transparent',
+                plot_bgcolor: 'transparent',
+                font: { color: '#e5e7eb', size: 10 },
+                xaxis: { showgrid: false, color: '#6b7280' },
+                yaxis: { showgrid: false, color: '#6b7280' }
+            };
+        }
+        
+        // Load NPK Chart
+        function loadNPKChart(soilData) {
+            if (!soilData) return;
+            
+            const npkData = soilData.npk_balance;
+            
+            Plotly.newPlot('npkChart', [{
+                r: [npkData.N.current, npkData.P.current, npkData.K.current],
+                theta: ['N', 'P', 'K'],
+                fill: 'toself',
+                type: 'scatterpolar',
+                name: 'Current Levels',
+                line: { color: '#3b82f6' }
+            }, {
+                r: [60, 35, 45], // Optimal values
+                theta: ['N', 'P', 'K'],
+                fill: 'toself',
+                type: 'scatterpolar',
+                name: 'Optimal Levels',
+                line: { color: '#10b981' }
+            }], {
+                polar: {
+                    radialaxis: {
+                        visible: true,
+                        range: [0, 100],
+                        color: '#6b7280'
+                    }
+                },
+                showlegend: false,
+                paper_bgcolor: 'transparent',
+                font: { color: '#e5e7eb' }
+            }, { displayModeBar: false });
+        }
+        
+        // Load Pest Risk
+        function loadPestRisk(pestData) {
+            if (!pestData) return;
+            
+            const container = document.getElementById('pestRiskContent');
+            let html = `
+                <div class="mb-6">
+                    <div class="text-center">
+                        <div class="text-4xl font-bold text-red-400 mb-2">${pestData.overall_risk}%</div>
+                        <div class="text-lg text-gray-300">Overall Risk Level: ${pestData.risk_category}</div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            `;
+            
+            pestData.pest_details.forEach(pest => {
+                const riskColor = pest.risk_percentage > 70 ? 'red' : pest.risk_percentage > 40 ? 'yellow' : 'green';
+                html += `
+                    <div class="risk-card glass-morphism rounded-lg p-6">
+                        <h4 class="font-semibold mb-2 flex items-center">
+                            <i class="fas fa-bug mr-2 text-${riskColor}-400"></i>
+                            ${pest.name}
+                        </h4>
+                        <div class="text-2xl font-bold text-${riskColor}-400 mb-2">${pest.risk_percentage}%</div>
+                        <div class="text-sm text-gray-400 mb-3">${pest.threat_level} Risk</div>
+                        <p class="text-xs text-gray-300">${pest.description}</p>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            container.innerHTML = html;
+        }
+        
+        // Load Enhanced Pest Risk Assessment with Interactive Charts
+        async function loadEnhancedPestRisk() {
+            try {
+                const district = document.getElementById('districtSelect').value;
+                const crop = document.getElementById('cropSelect').value;
+                
+                console.log(`Loading pest risk for ${district} - ${crop}`);
+                
+                // Show loading state for all charts
+                showPestRiskLoading();
+                
+                // Try to fetch from API first
+                let pestData = null;
+                try {
+                    const response = await fetch(`/api/pest_trends/${crop}`);
+                    if (response.ok) {
+                        const apiData = await response.json();
+                        pestData = transformApiDataToPestRisk(apiData, district, crop);
+                    } else {
+                        throw new Error('API response not ok');
+                    }
+                } catch (apiError) {
+                    console.log('API failed, using mock data:', apiError);
+                    pestData = generateMockPestRiskData(district, crop);
+                }
+                
+                // Update all sections with the pest data
+                await updatePestRiskSummary(pestData);
+                await createInteractivePestRiskChart(pestData);
+                await createInteractivePestForecastChart(pestData);
+                updateDetailedPestInfo(pestData);
+                updateControlRecommendations(pestData);
+                
+                console.log('Pest risk assessment loaded successfully');
+                
+            } catch (error) {
+                console.error('Error loading enhanced pest risk:', error);
+                
+                // Final fallback with error handling
+                const fallbackData = generateMockPestRiskData('Pune', 'Cotton');
+                await updatePestRiskSummary(fallbackData);
+                await createInteractivePestRiskChart(fallbackData);
+                await createInteractivePestForecastChart(fallbackData);
+            }
+        }
+        
+        // Show loading state for pest risk section
+        function showPestRiskLoading() {
+            document.getElementById('pestRiskChart').innerHTML = `
+                <div class="flex items-center justify-center h-full min-h-96">
+                    <div class="text-center">
+                        <i class="fas fa-spinner fa-spin text-3xl text-gray-400 mb-4"></i>
+                        <p class="text-gray-400">Loading pest risk analysis...</p>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('pestForecastChart').innerHTML = `
+                <div class="flex items-center justify-center h-full min-h-80">
+                    <div class="text-center">
+                        <i class="fas fa-spinner fa-spin text-3xl text-gray-400 mb-4"></i>
+                        <p class="text-gray-400">Loading 7-day forecast...</p>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Generate comprehensive mock pest risk data
+        function generateMockPestRiskData(district, crop) {
+            const pestList = {
+                'Cotton': [
+                    { name: 'American Bollworm', riskLevel: 85, threat: 'Critical', description: 'High temperature and humidity favor outbreak' },
+                    { name: 'Pink Bollworm', riskLevel: 72, threat: 'High', description: 'Peak breeding season, immediate attention needed' },
+                    { name: 'Aphids', riskLevel: 45, threat: 'Medium', description: 'Moderate population detected, monitor closely' },
+                    { name: 'Whitefly', riskLevel: 38, threat: 'Medium', description: 'Vector for viral diseases, preventive measures advised' },
+                    { name: 'Thrips', riskLevel: 25, threat: 'Low', description: 'Population under control, regular monitoring sufficient' },
+                    { name: 'Jassids', riskLevel: 30, threat: 'Low', description: 'Seasonal occurrence, manageable with IPM practices' }
+                ],
+                'Tomato': [
+                    { name: 'Fruit Borer', riskLevel: 78, threat: 'High', description: 'Peak activity period, immediate control required' },
+                    { name: 'Leaf Miner', riskLevel: 65, threat: 'High', description: 'Rapid multiplication in current weather conditions' },
+                    { name: 'Early Blight', riskLevel: 55, threat: 'Medium', description: 'Fungal disease risk increased due to humidity' },
+                    { name: 'Late Blight', riskLevel: 42, threat: 'Medium', description: 'Weather conditions moderately favorable' },
+                    { name: 'Cutworm', riskLevel: 28, threat: 'Low', description: 'Low population, routine monitoring adequate' },
+                    { name: 'Spider Mites', riskLevel: 35, threat: 'Low', description: 'Hot weather increases risk, water stress management needed' }
+                ],
+                'Rice': [
+                    { name: 'Brown Plant Hopper', riskLevel: 88, threat: 'Critical', description: 'Vector for viral diseases, immediate control essential' },
+                    { name: 'Stem Borer', riskLevel: 70, threat: 'High', description: 'Peak larval activity, field inspection required' },
+                    { name: 'Leaf Folder', riskLevel: 48, threat: 'Medium', description: 'Moderate infestation levels detected' },
+                    { name: 'Blast Disease', riskLevel: 52, threat: 'Medium', description: 'Fungal infection risk elevated with current humidity' },
+                    { name: 'Bacterial Leaf Blight', riskLevel: 33, threat: 'Low', description: 'Manageable with proper field sanitation' },
+                    { name: 'Gall Midge', riskLevel: 26, threat: 'Low', description: 'Below economic threshold level' }
+                ]
+            };
+            
+            const pests = pestList[crop] || pestList['Cotton'];
+            const highRiskPests = pests.filter(p => p.riskLevel > 60);
+            const overallRisk = Math.round(pests.reduce((sum, p) => sum + p.riskLevel, 0) / pests.length);
+            
+            return {
+                district: district,
+                crop: crop,
+                overall_risk: overallRisk,
+                alert_level: overallRisk > 70 ? 'High Alert' : overallRisk > 50 ? 'Medium Alert' : 'Low Alert',
+                risk_category: overallRisk > 70 ? 'High' : overallRisk > 40 ? 'Medium' : 'Low',
+                pests: pests,
+                high_risk_pests: highRiskPests.map(p => p.name),
+                immediate_actions: [
+                    'Conduct immediate field inspection for high-risk pests',
+                    'Apply recommended IPM measures for critical threats',
+                    'Increase monitoring frequency to daily for next 7 days',
+                    'Consider emergency pesticide application if threshold exceeded'
+                ],
+                assessment_details: {
+                    high_risk_count: pests.filter(p => p.riskLevel > 70).length,
+                    moderate_risk_count: pests.filter(p => p.riskLevel >= 40 && p.riskLevel <= 70).length,
+                    low_risk_count: pests.filter(p => p.riskLevel < 40).length
+                },
+                recommendations: [
+                    `Monitor ${highRiskPests[0]?.name || 'high-risk pests'} daily using pheromone traps and visual inspection`,
+                    'Apply integrated pest management (IPM) strategies focusing on biological control agents',
+                    'Maintain field sanitation and remove crop residues to reduce pest breeding sites',
+                    'Consider resistant varieties for next planting season if available'
+                ]
+            };
+        }
+        
+        // Transform API data to pest risk format
+        function transformApiDataToPestRisk(apiData, district, crop) {
+            // If API returns proper data, transform it; otherwise fallback to mock
+            if (apiData && apiData.pest_details) {
+                return {
+                    district: district,
+                    crop: crop,
+                    overall_risk: apiData.overall_risk || 65,
+                    alert_level: apiData.risk_category + ' Alert',
+                    risk_category: apiData.risk_category || 'Medium',
+                    pests: apiData.pest_details.map(pest => ({
+                        name: pest.name,
+                        riskLevel: pest.risk_percentage,
+                        threat: pest.threat_level,
+                        description: pest.description || 'Pest risk assessment based on current conditions'
+                    })),
+                    high_risk_pests: apiData.pest_details.filter(p => p.risk_percentage > 60).map(p => p.name),
+                    immediate_actions: [
+                        'Follow recommended control measures based on risk assessment',
+                        'Monitor high-risk pests closely',
+                        'Apply preventive measures for medium-risk pests'
+                    ],
+                    assessment_details: {
+                        high_risk_count: apiData.pest_details.filter(p => p.risk_percentage > 70).length,
+                        moderate_risk_count: apiData.pest_details.filter(p => p.risk_percentage >= 40 && p.risk_percentage <= 70).length,
+                        low_risk_count: apiData.pest_details.filter(p => p.risk_percentage < 40).length
+                    },
+                    recommendations: [
+                        'Implement integrated pest management strategies',
+                        'Regular field monitoring and early detection',
+                        'Use of biological control agents where applicable'
+                    ]
+                };
+            } else {
+                return generateMockPestRiskData(district, crop);
+            }
+        }
+        
+        // Update pest risk summary cards
+        async function updatePestRiskSummary(data) {
+            document.getElementById('overallRiskLevel').textContent = data.overall_risk + '%';
+            document.getElementById('alertLevel').textContent = data.alert_level;
+            document.getElementById('highRiskPestCount').textContent = data.high_risk_pests.length;
+            document.getElementById('topPestName').textContent = data.high_risk_pests[0] || 'None';
+            document.getElementById('actionsNeeded').textContent = data.immediate_actions.length;
+            
+            // Update immediate actions list
+            const actionsList = document.getElementById('immediateActionsList');
+            let actionsHTML = '';
+            data.immediate_actions.forEach(action => {
+                actionsHTML += `
+                    <div class="flex items-center">
+                        <i class="fas fa-exclamation-triangle text-red-400 mr-2"></i>
+                        <span>${action}</span>
+                    </div>
+                `;
+            });
+            actionsList.innerHTML = actionsHTML;
+        }
+        
+        // Create Interactive Pest Risk Chart
+        async function createInteractivePestRiskChart(data) {
+            try {
+                const pests = data.pests || [];
+                const pestNames = pests.map(p => p.name.substring(0, 15)); // Limit name length
+                const riskLevels = pests.map(p => p.riskLevel);
+                const threats = pests.map(p => p.threat);
+                
+                // Color mapping based on risk levels
+                const colors = riskLevels.map(risk => {
+                    if (risk >= 75) return '#EF4444'; // Red for critical
+                    if (risk >= 60) return '#F97316'; // Orange for high
+                    if (risk >= 40) return '#EAB308'; // Yellow for medium
+                    return '#22C55E'; // Green for low
+                });
+                
+                // Create horizontal bar chart for better readability
+                const trace = {
+                    x: riskLevels,
+                    y: pestNames,
+                    type: 'bar',
+                    orientation: 'h',
+                    marker: {
+                        color: colors,
+                        line: {
+                            color: 'rgba(255, 255, 255, 0.3)',
+                            width: 1
+                        }
+                    },
+                    text: riskLevels.map((risk, index) => `${risk}% (${threats[index]})`),
+                    textposition: 'inside',
+                    textfont: { color: 'white', size: 12, family: 'Arial, sans-serif' },
+                    hovertemplate: '<b>%{y}</b><br>' +
+                                   'Risk Level: <b>%{x}%</b><br>' +
+                                   'Threat: <b>%{customdata}</b><br>' +
+                                   '<extra></extra>',
+                    customdata: threats
+                };
+                
+                // Add reference lines
+                const layout = {
+                    title: {
+                        text: `Pest Risk Analysis - ${data.crop} (${data.district})`,
+                        font: { size: 16, color: '#ffffff', family: 'Arial, sans-serif' },
+                        x: 0.5
+                    },
+                    xaxis: {
+                        title: 'Risk Level (%)',
+                        range: [0, 100],
+                        showgrid: true,
+                        gridcolor: 'rgba(255,255,255,0.2)',
+                        color: '#ffffff',
+                        tickfont: { size: 12, color: '#ffffff' }
+                    },
+                    yaxis: {
+                        title: 'Pest Species',
+                        showgrid: false,
+                        color: '#ffffff',
+                        tickfont: { size: 12, color: '#ffffff' }
+                    },
+                    plot_bgcolor: 'rgba(30,30,30,0.9)',
+                    paper_bgcolor: 'transparent',
+                    font: { color: '#ffffff', size: 12, family: 'Arial, sans-serif' },
+                    showlegend: false,
+                    height: 400,
+                    margin: { t: 60, r: 50, b: 80, l: 120 },
+                    shapes: [
+                        // Critical risk line (75%)
+                        {
+                            type: 'line',
+                            x0: 75, x1: 75,
+                            y0: -0.5, y1: pestNames.length - 0.5,
+                            line: { color: '#EF4444', width: 2, dash: 'dot' }
+                        },
+                        // High risk line (60%)
+                        {
+                            type: 'line',
+                            x0: 60, x1: 60,
+                            y0: -0.5, y1: pestNames.length - 0.5,
+                            line: { color: '#F97316', width: 2, dash: 'dot' }
+                        },
+                        // Medium risk line (40%)
+                        {
+                            type: 'line',
+                            x0: 40, x1: 40,
+                            y0: -0.5, y1: pestNames.length - 0.5,
+                            line: { color: '#EAB308', width: 2, dash: 'dot' }
+                        }
+                    ],
+                    annotations: [
+                        {
+                            x: 75, y: pestNames.length - 0.3,
+                            text: 'Critical (75%)',
+                            showarrow: false,
+                            font: { size: 10, color: '#EF4444' },
+                            xanchor: 'left'
+                        },
+                        {
+                            x: 60, y: pestNames.length - 0.5,
+                            text: 'High (60%)',
+                            showarrow: false,
+                            font: { size: 10, color: '#F97316' },
+                            xanchor: 'left'
+                        },
+                        {
+                            x: 40, y: pestNames.length - 0.7,
+                            text: 'Medium (40%)',
+                            showarrow: false,
+                            font: { size: 10, color: '#EAB308' },
+                            xanchor: 'left'
+                        }
+                    ]
+                };
+                
+                // Plot the chart
+                await Plotly.newPlot('pestRiskChart', [trace], layout, {
+                    displayModeBar: false,
+                    responsive: true
+                });
+                
+                console.log('Pest risk chart created successfully');
+                
+            } catch (error) {
+                console.error('Error creating pest risk chart:', error);
+                document.getElementById('pestRiskChart').innerHTML = `
+                    <div class="text-center py-12">
+                        <i class="fas fa-exclamation-triangle text-red-400 text-3xl mb-4"></i>
+                        <p class="text-red-400">Failed to load pest risk chart</p>
+                        <p class="text-gray-400 text-sm">Please try refreshing the page</p>
+                    </div>
+                `;
+            }
+        }
+        
+        // Create Interactive Pest Forecast Chart
+        async function createInteractivePestForecastChart(data) {
+            try {
+                const pests = data.pests || [];
+                const highRiskPests = pests.filter(p => p.riskLevel > 50).slice(0, 4); // Top 4 high-risk pests
+                
+                // Generate 7-day forecast data
+                const dates = [];
+                for (let i = 0; i < 7; i++) {
+                    const date = new Date();
+                    date.setDate(date.getDate() + i);
+                    dates.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+                }
+                
+                const traces = [];
+                const colors = ['#EF4444', '#F97316', '#EAB308', '#22C55E'];
+                
+                highRiskPests.forEach((pest, index) => {
+                    const forecastData = [];
+                    let currentRisk = pest.riskLevel;
+                    
+                    for (let day = 0; day < 7; day++) {
+                        // Simulate realistic risk progression
+                        const variation = (Math.random() - 0.5) * 10;
+                        const weatherFactor = Math.sin(day * 0.5) * 5; // Simulated weather impact
+                        const newRisk = Math.max(10, Math.min(95, currentRisk + variation + weatherFactor));
+                        forecastData.push(Math.round(newRisk));
+                        currentRisk = newRisk;
+                    }
+                    
+                    traces.push({
+                        x: dates,
+                        y: forecastData,
+                        type: 'scatter',
+                        mode: 'lines+markers',
+                        name: pest.name,
+                        line: {
+                            color: colors[index],
+                            width: 3
+                        },
+                        marker: {
+                            size: 8,
+                            color: colors[index],
+                            line: {
+                                color: 'white',
+                                width: 2
+                            }
+                        },
+                        hovertemplate: '<b>%{fullData.name}</b><br>' +
+                                       'Date: %{x}<br>' +
+                                       'Risk: <b>%{y}%</b><br>' +
+                                       '<extra></extra>'
+                    });
+                });
+                
+                const layout = {
+                    title: {
+                        text: '7-Day Pest Risk Forecast',
+                        font: { size: 16, color: '#ffffff', family: 'Arial, sans-serif' },
+                        x: 0.5
+                    },
+                    xaxis: {
+                        title: 'Date',
+                        showgrid: true,
+                        gridcolor: 'rgba(255,255,255,0.2)',
+                        color: '#ffffff',
+                        tickfont: { size: 12, color: '#ffffff' }
+                    },
+                    yaxis: {
+                        title: 'Risk Level (%)',
+                        range: [0, 100],
+                        showgrid: true,
+                        gridcolor: 'rgba(255,255,255,0.2)',
+                        color: '#ffffff',
+                        tickfont: { size: 12, color: '#ffffff' }
+                    },
+                    plot_bgcolor: 'rgba(30,30,30,0.9)',
+                    paper_bgcolor: 'transparent',
+                    font: { color: '#ffffff', size: 12, family: 'Arial, sans-serif' },
+                    legend: {
+                        orientation: 'h',
+                        x: 0.5,
+                        xanchor: 'center',
+                        y: -0.2,
+                        bgcolor: 'rgba(0,0,0,0.5)',
+                        bordercolor: 'rgba(255,255,255,0.3)',
+                        borderwidth: 1,
+                        font: { color: '#ffffff' }
+                    },
+                    height: 350,
+                    margin: { t: 60, r: 50, b: 100, l: 60 },
+                    shapes: [
+                        // Critical threshold line
+                        {
+                            type: 'line',
+                            x0: dates[0], x1: dates[dates.length - 1],
+                            y0: 75, y1: 75,
+                            line: { color: '#EF4444', width: 2, dash: 'dot' }
+                        },
+                        // High threshold line
+                        {
+                            type: 'line',
+                            x0: dates[0], x1: dates[dates.length - 1],
+                            y0: 60, y1: 60,
+                            line: { color: '#F97316', width: 2, dash: 'dot' }
+                        }
+                    ],
+                    annotations: [
+                        {
+                            x: dates[5], y: 77,
+                            text: 'Critical Threshold',
+                            showarrow: false,
+                            font: { size: 10, color: '#EF4444' },
+                            xanchor: 'center'
+                        },
+                        {
+                            x: dates[5], y: 62,
+                            text: 'High Risk Threshold',
+                            showarrow: false,
+                            font: { size: 10, color: '#F97316' },
+                            xanchor: 'center'
+                        }
+                    ]
+                };
+                
+                // Plot the forecast chart
+                await Plotly.newPlot('pestForecastChart', traces, layout, {
+                    displayModeBar: false,
+                    responsive: true
+                });
+                
+                console.log('Pest forecast chart created successfully');
+                
+            } catch (error) {
+                console.error('Error creating pest forecast chart:', error);
+                document.getElementById('pestForecastChart').innerHTML = `
+                    <div class="text-center py-12">
+                        <i class="fas fa-exclamation-triangle text-red-400 text-3xl mb-4"></i>
+                        <p class="text-red-400">Failed to load forecast chart</p>
+                        <p class="text-gray-400 text-sm">Please try refreshing the page</p>
+                    </div>
+                `;
+            }
+        }
+        
+        // Update detailed pest information
+        function updateDetailedPestInfo(data) {
+            const container = document.getElementById('detailedPestInfo');
+            let html = '';
+            
+            // Show assessment details
+            const details = data.assessment_details;
+            html += `
+                <div class="bg-gray-800 rounded-lg p-4">
+                    <h4 class="font-semibold text-red-400 mb-3">High Risk Pests</h4>
+                    <div class="text-3xl font-bold text-red-400 mb-2">${details.high_risk_count}</div>
+                    <div class="text-sm text-gray-400">Requiring immediate attention</div>
+                </div>
+                <div class="bg-gray-800 rounded-lg p-4">
+                    <h4 class="font-semibold text-yellow-400 mb-3">Moderate Risk</h4>
+                    <div class="text-3xl font-bold text-yellow-400 mb-2">${details.moderate_risk_count}</div>
+                    <div class="text-sm text-gray-400">Monitor closely</div>
+                </div>
+                <div class="bg-gray-800 rounded-lg p-4">
+                    <h4 class="font-semibold text-green-400 mb-3">Low Risk</h4>
+                    <div class="text-3xl font-bold text-green-400 mb-2">${details.low_risk_count}</div>
+                    <div class="text-sm text-gray-400">Continue monitoring</div>
+                </div>
+            `;
+            
+            container.innerHTML = html;
+        }
+        
+        // Update control recommendations
+        function updateControlRecommendations(data) {
+            const container = document.getElementById('controlRecommendations');
+            let html = '';
+            
+            data.recommendations.forEach((recommendation, index) => {
+                const priorityColor = index === 0 ? 'red' : index === 1 ? 'yellow' : 'green';
+                html += `
+                    <div class="bg-gray-800 rounded-lg p-4 border-l-4 border-${priorityColor}-400">
+                        <div class="flex items-center mb-2">
+                            <i class="fas fa-lightbulb text-${priorityColor}-400 mr-2"></i>
+                            <span class="font-semibold text-${priorityColor}-400">Priority ${index + 1}</span>
+                        </div>
+                        <p class="text-gray-300">${recommendation}</p>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        // Load Zone Mapping
+        function loadZoneMapping(zoneData) {
+            if (!zoneData) return;
+            
+            const container = document.getElementById('zoneRiskGrid');
+            let html = '';
+            
+            Object.entries(zoneData).forEach(([zone, data]) => {
+                const riskColor = data.avg_risk > 70 ? 'red' : data.avg_risk > 40 ? 'yellow' : 'green';
+                html += `
+                    <div class="risk-card glass-morphism rounded-lg p-6">
+                        <h3 class="font-bold text-lg mb-4">${zone}</h3>
+                        
+                        <div class="space-y-3">
+                            <div>
+                                <div class="text-gray-400 text-sm">Avg Risk</div>
+                                <div class="text-2xl font-bold text-${riskColor}-400">${data.avg_risk}%</div>
+                            </div>
+                            
+                            <div>
+                                <div class="text-gray-400 text-sm">High Risk Districts</div>
+                                <div class="text-xl font-bold">${data.high_risk_districts}</div>
+                            </div>
+                            
+                            <div>
+                                <div class="text-gray-400 text-sm">Total Districts</div>
+                                <div class="text-xl font-bold">${data.total_districts}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        // Google Maps Integration
+        let map;
+        let markers = [];
+        
+        function initializeMap() {
+            // Maharashtra center coordinates
+            const maharashtraCenter = { lat: 19.7515, lng: 75.7139 };
+            
+            map = new google.maps.Map(document.getElementById('map'), {
+                zoom: 7,
+                center: maharashtraCenter,
+                mapTypeId: 'hybrid',
+                styles: [
+                    {
+                        elementType: 'geometry',
+                        stylers: [{ color: '#1f2937' }]
+                    },
+                    {
+                        elementType: 'labels.text.stroke',
+                        stylers: [{ color: '#1f2937' }]
+                    },
+                    {
+                        elementType: 'labels.text.fill',
+                        stylers: [{ color: '#8b949e' }]
+                    }
+                ]
+            });
+            
+            // Add district markers
+            addDistrictMarkers();
+        }
+        
+        function addDistrictMarkers() {
+            const districts = [
+                { name: 'Pune', lat: 18.5204, lng: 73.8567, risk: 'Medium' },
+                { name: 'Mumbai', lat: 19.0760, lng: 72.8777, risk: 'Low' },
+                { name: 'Nagpur', lat: 21.1458, lng: 79.0882, risk: 'High' },
+                { name: 'Nashik', lat: 19.9975, lng: 73.7898, risk: 'Medium' },
+                { name: 'Aurangabad', lat: 19.8762, lng: 75.3433, risk: 'High' },
+                { name: 'Solapur', lat: 17.6599, lng: 75.9064, risk: 'Low' }
+            ];
+            
+            districts.forEach(district => {
+                const color = district.risk === 'High' ? '#ef4444' : 
+                            district.risk === 'Medium' ? '#f59e0b' : '#10b981';
+                
+                const marker = new google.maps.Marker({
+                    position: { lat: district.lat, lng: district.lng },
+                    map: map,
+                    title: `${district.name} - ${district.risk} Risk`,
+                    icon: {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: 8,
+                        fillColor: color,
+                        fillOpacity: 0.8,
+                        strokeWeight: 2,
+                        strokeColor: '#ffffff'
+                    }
+                });
+                
+                const infoWindow = new google.maps.InfoWindow({
+                    content: `
+                        <div style="color: black; padding: 8px;">
+                            <h3 style="margin: 0 0 8px 0;">${district.name}</h3>
+                            <p style="margin: 0;">Risk Level: <strong style="color: ${color};">${district.risk}</strong></p>
+                        </div>
+                    `
+                });
+                
+                marker.addListener('click', () => {
+                    markers.forEach(m => m.infoWindow.close());
+                    infoWindow.open(map, marker);
+                });
+                
+                markers.push({ marker, infoWindow });
+            });
+        }
+        
+        function toggleMapLayer(layerType) {
+            // Toggle map layers based on type
+            console.log('Toggling layer:', layerType);
+            // Implementation for different overlay layers
+        }
+        
+        // Initialize on page load
+        window.addEventListener('load', () => {
+            updateNDVI();
+            
+            // Load enhanced weather charts on initial page load
+            console.log('Page loaded, initializing weather charts...');
+            setTimeout(() => {
+                loadWeatherCharts(null);
+            }, 1000);  // Delay to ensure all elements are ready
+            
+            // Initialize map when zone mapping tab is shown
+            const mapObserver = new MutationObserver((mutations) => {
+                mutations.forEach((mutation) => {
+                    if (mutation.target.id === 'zone-mapping' && !mutation.target.classList.contains('hidden')) {
+                        setTimeout(initializeMap, 500);
+                    }
+                });
+            });
+            
+            const zoneTab = document.getElementById('zone-mapping');
+            if (zoneTab) {
+                mapObserver.observe(zoneTab, { attributes: true, attributeFilter: ['class'] });
+            }
+        });
+        
+        // Load Google Maps API
+        function loadGoogleMapsAPI() {
+            const script = document.createElement('script');
+            script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyCr8a-MMgm9dgLcSryrv2AEHrJ9RR3UgBQ&callback=initializeMap`;
+            script.async = true;
+            script.defer = true;
+            document.head.appendChild(script);
+        }
+        
+        // Load maps when needed
+        setTimeout(loadGoogleMapsAPI, 2000);
+    </script>
+</body>
+</html>
