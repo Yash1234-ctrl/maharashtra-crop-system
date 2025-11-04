@@ -33,6 +33,35 @@ from mongodb_auth import MongoFarmerAuth
 from enhanced_pest_data import PEST_DATABASE, get_disease_severity
 
 
+import requests
+import pickle
+import os
+import streamlit as st
+
+@st.cache_resource(show_spinner=False)
+def load_model():
+    """Load the ML model safely (binary download + cache)"""
+    model_path = "fertilizer_prediction_model.pkl"
+
+    # If not already downloaded, fetch it
+    if not os.path.exists(model_path):
+        url = "https://huggingface.co/Inamdar007/newfiledata/resolve/main/fertilizer_prediction_model.pkl"
+        st.info("Downloading model file...")
+        response = requests.get(url, stream=True)
+        response.raise_for_status()
+
+        # Save in binary mode
+        with open(model_path, "wb") as f:
+            for chunk in response.iter_content(chunk_size=8192):
+                f.write(chunk)
+
+    # Load safely
+    with open(model_path, "rb") as f:
+        model = pickle.load(f)
+    return model
+
+
+
 
 # --- Secure Secrets Setup (for Streamlit Cloud + Local Dev) ---
 import os
