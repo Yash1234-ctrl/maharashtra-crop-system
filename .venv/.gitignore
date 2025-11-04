@@ -1,0 +1,10 @@
+# Ignore heavy or local files
+venv/
+Lib/
+Scripts/
+__pycache__/
+*.dll
+*.pyd
+*.zip
+*.pkl
+*.csv
