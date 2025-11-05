@@ -191,3 +191,43 @@ If you encounter any issues or have questions:
 ---
 
 **Made with ❤️ for sustainable agriculture**
+
+## 📦 Large Files (Hosted Externally)
+
+Due to GitHub’s 100 MB file limit, large assets are hosted externally on Google Drive.
+
+| File | Description | Download Link |
+|------|--------------|----------------|
+| `agriculture_dataset.csv` | Main agricultural dataset for Maharashtra | [Download](https://drive.google.com/uc?export=download&id=1gYrPlQFe9vJUA2lefT4t16u2Odka32Ze) |
+| `fertilizer_prediction_model.pkl` | Trained fertilizer recommendation model | [Download](https://drive.google.com/uc?export=download&id=1ZNYqalYl1uATPF2g_bf9bgBcKtm2rbg8) |
+| `maharashtra_agricultural_system_deployment.zip` | Deployment bundle | [Download](https://drive.google.com/uc?export=download&id=10cOBdfiss9IFIKf9P90GvswUxz6ARBth) |
+
+If your code needs these files at runtime (e.g., Streamlit app or model loading), add the helper below near the top of your main Python file (example `maharashtra_crop_system.py`):
+
+```python
+import os
+import requests
+
+def download_file(url, filename):
+   if not os.path.exists(filename):
+      print(f"Downloading {filename} ...")
+      response = requests.get(url)
+      with open(filename, "wb") as f:
+         f.write(response.content)
+      print(f"{filename} downloaded successfully.")
+   else:
+      print(f"{filename} already exists.")
+
+# Automatically download files if missing
+download_file(
+   "https://drive.google.com/uc?export=download&id=1gYrPlQFe9vJUA2lefT4t16u2Odka32Ze",
+   "maharashtra_agri_deployment/data/agriculture_dataset.csv",
+)
+
+download_file(
+   "https://drive.google.com/uc?export=download&id=1ZNYqalYl1uATPF2g_bf9bgBcKtm2rbg8",
+   "maharashtra_agri_deployment/models/fertilizer_prediction_model.pkl",
+)
+```
+
+Note: I updated `maharashtra_crop_system.py` to prefer the downloaded model under `maharashtra_agri_deployment/models/` and to keep a backward-compatible copy in the project root (`fertilizer_prediction_model.pkl`). Make sure `requests` is installed in your environment before running the downloader.

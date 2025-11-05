@@ -13,6 +13,7 @@ import sqlite3
 import warnings
 from datetime import datetime, timedelta
 from io import BytesIO
+import shutil
 
 # Third-party library imports
 import streamlit as st
@@ -38,24 +39,96 @@ import pickle
 import os
 import streamlit as st
 
+# --- Small helper to download large assets hosted externally ---
+def download_file(url, filename):
+    """Download a file from `url` to `filename` if it doesn't exist yet.
+    Uses a simple streaming download and creates parent directories as needed.
+    """
+    parent = os.path.dirname(filename)
+    if parent and not os.path.exists(parent):
+        os.makedirs(parent, exist_ok=True)
+
+    if not os.path.exists(filename):
+        try:
+            st.info(f"Downloading {os.path.basename(filename)} ...")
+        except Exception:
+            # streamlit may not be initialized when running in some contexts
+            print(f"Downloading {os.path.basename(filename)} ...")
+
+        # Use requests with streaming to avoid memory spikes
+        resp = requests.get(url, stream=True)
+        resp.raise_for_status()
+        with open(filename, "wb") as fh:
+            for chunk in resp.iter_content(chunk_size=8192):
+                if chunk:
+                    fh.write(chunk)
+
+        try:
+            st.success(f"{os.path.basename(filename)} downloaded successfully.")
+        except Exception:
+            print(f"{os.path.basename(filename)} downloaded successfully.")
+    else:
+        try:
+            st.info(f"{os.path.basename(filename)} already exists.")
+        except Exception:
+            print(f"{os.path.basename(filename)} already exists.")
+
+
+# If you keep large assets on Google Drive (recommended), download them into
+# a local deployment folder so they are not tracked in git. Adjust these
+# links as needed. These are safe no-op downloads if files already exist.
+download_file(
+    "https://drive.google.com/uc?export=download&id=1gYrPlQFe9vJUA2lefT4t16u2Odka32Ze",
+    "maharashtra_agri_deployment/data/agriculture_dataset.csv",
+)
+
+download_file(
+    "https://drive.google.com/uc?export=download&id=1ZNYqalYl1uATPF2g_bf9bgBcKtm2rbg8",
+    "maharashtra_agri_deployment/models/fertilizer_prediction_model.pkl",
+)
+
+
 @st.cache_resource(show_spinner=False)
 def load_model():
-    """Load the ML model safely (binary download + cache)"""
-    model_path = "fertilizer_prediction_model.pkl"
+    """Load the ML model safely (binary download + cache).
 
-    # If not already downloaded, fetch it
+    Behavior:
+    - Prefer the model inside `maharashtra_agri_deployment/models/` (download target)
+    - If missing, fall back to `fertilizer_prediction_model.pkl` in repo root
+    - If neither exists, try the original huggingface URL as a last resort
+    After download, ensure a copy exists at the fallback path for any other
+    code that expects the model at the repo root.
+    """
+    preferred = os.path.join("maharashtra_agri_deployment", "models", "fertilizer_prediction_model.pkl")
+    fallback = "fertilizer_prediction_model.pkl"
+
+    model_path = preferred if os.path.exists(preferred) else fallback
+
+    # If model not present at either path, try the huggingface fallback
     if not os.path.exists(model_path):
         url = "https://huggingface.co/Inamdar007/newfiledata/resolve/main/fertilizer_prediction_model.pkl"
-        st.info("Downloading model file...")
-        response = requests.get(url, stream=True)
-        response.raise_for_status()
+        try:
+            st.info("Downloading model file (fallback)...")
+        except Exception:
+            print("Downloading model file (fallback)...")
+        resp = requests.get(url, stream=True)
+        resp.raise_for_status()
+        with open(preferred, "wb") as fh:
+            for chunk in resp.iter_content(chunk_size=8192):
+                if chunk:
+                    fh.write(chunk)
+        model_path = preferred
 
-        # Save in binary mode
-        with open(model_path, "wb") as f:
-            for chunk in response.iter_content(chunk_size=8192):
-                f.write(chunk)
+    # Ensure a copy exists at the fallback location for backward compatibility
+    try:
+        if os.path.exists(model_path) and model_path != fallback:
+            if not os.path.exists(fallback):
+                shutil.copyfile(model_path, fallback)
+    except Exception:
+        # Non-fatal: proceed to load from model_path
+        pass
 
-    # Load safely
+    # Finally, load the model
     with open(model_path, "rb") as f:
         model = pickle.load(f)
     return model
