@@ -58,3 +58,36 @@ agriculture_dataset.csv
 archive/
 dataset/
 serviceAccountKey.json
+
+# Ignore virtual environment and heavy folders
+venv/
+__pycache__/
+Lib/
+
+# Ignore large/binary files
+*.dll
+*.pyd
+*.pkl
+*.zip
+*.csv
+*.h5
+
+# Ignore TensorFlow build files
+*.pb
+*.so
+# Ignore virtual environment and heavy folders
+venv/
+__pycache__/
+Lib/
+
+# Ignore large/binary files
+*.dll
+*.pyd
+*.pkl
+*.zip
+*.csv
+*.h5
+
+# Ignore TensorFlow build files
+*.pb
+*.so
