@@ -19,24 +19,7 @@ import shutil
 import streamlit as st
 import pandas as pd
 import numpy as np
-# Safe TensorFlow import: if it's missing, set tf=None and show a friendly message.
-try:
-    import tensorflow as tf
-except ModuleNotFoundError:
-    tf = None
-    # Streamlit is already imported above, so prefer an in-app message; fallback to print if not running in Streamlit.
-    msg = (
-        "TensorFlow is not installed in the running environment. "
-        "Features that require TensorFlow will be disabled.\n\n"
-        "To enable them, add one of the following to your environment:\n"
-        "  - For CPU-only: add `tensorflow-cpu` to requirements.txt\n"
-        "  - For GPU support: add `tensorflow` (ensure compatible CUDA/cuDNN on host)\n\n"
-        "Then reinstall requirements (pip install -r requirements.txt) or redeploy the app."
-    )
-    try:
-        st.error(msg)
-    except Exception:
-        print(msg)
+import tensorflow as tf
 import requests
 from PIL import Image
 import matplotlib.pyplot as plt
@@ -44,14 +27,6 @@ from matplotlib.backends.backend_pdf import PdfPages
 import plotly.express as px
 import plotly.graph_objects as go
 from dotenv import load_dotenv
-# Attempt to start a lightweight health endpoint when possible
-try:
-    from health_server import start_in_thread
-    start_in_thread()
-except Exception:
-    # Some hosts (Streamlit Cloud, managed PaaS) disallow binding extra ports.
-    # If starting the health server fails, silently continue so the app still runs.
-    pass
 
 # Local module imports
 from mongodb_config import MongoCropDB
@@ -80,30 +55,23 @@ def download_file(url, filename):
             # streamlit may not be initialized when running in some contexts
             print(f"Downloading {os.path.basename(filename)} ...")
 
-
-
-def download_file(url, filename):
-    """
-    Downloads a file from the given URL if it doesn't already exist.
-    Uses streaming to avoid memory spikes.
-    """
-
-    if not os.path.exists(filename):
-        # Stream download (memory efficient)
+        # Use requests with streaming to avoid memory spikes
         resp = requests.get(url, stream=True)
         resp.raise_for_status()
-
         with open(filename, "wb") as fh:
             for chunk in resp.iter_content(chunk_size=8192):
                 if chunk:
                     fh.write(chunk)
 
-        # Success message (works inside Streamlit or normal terminal)
         try:
             st.success(f"{os.path.basename(filename)} downloaded successfully.")
         except Exception:
             print(f"{os.path.basename(filename)} downloaded successfully.")
-
+    else:
+        try:
+            st.info(f"{os.path.basename(filename)} already exists.")
+        except Exception:
+            print(f"{os.path.basename(filename)} already exists.")
 
 
 # If you keep large assets on Google Drive (recommended), download them into
@@ -199,23 +167,9 @@ db = client["maharashtra_agri_db"]
 # Load environment variables
 load_dotenv()
 
-# Configure tensorflow to avoid memory issues (only if TF imported)
-if tf is not None:
-    try:
-        tf.config.threading.set_inter_op_parallelism_threads(1)
-        tf.config.threading.set_intra_op_parallelism_threads(1)
-    except Exception:
-        # Non-fatal: if the TF runtime doesn't expose config in this environment,
-        # continue without raising so the app can still run parts that don't use TF.
-        pass
-else:
-    try:
-        st.warning(
-            "TensorFlow not available — ML features are disabled. "
-            "See README or the app logs for installation instructions."
-        )
-    except Exception:
-        print("TensorFlow not available — ML features are disabled. See README for installation instructions.")
+# Configure tensorflow to avoid memory issues
+tf.config.threading.set_inter_op_parallelism_threads(1)
+tf.config.threading.set_intra_op_parallelism_threads(1)
 
 # Suppress plotly warnings
 warnings.filterwarnings('ignore', message='.*keyword arguments.*')
