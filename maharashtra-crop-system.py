@@ -260,9 +260,9 @@ st.markdown("""
         --dark-bg: #0F1419;           /* Deep Dark Background */
         --card-bg: #1A2027;           /* Card Background */
         --surface-bg: #232A36;        /* Surface Background */
-        --text-primary: #E8F5E8;      /* Primary Text */
+        --text-primary: #F2FBF2;      /* Primary Text (brighter for small text) */
         --text-secondary: #B8D4B8;    /* Secondary Text */
-        --border-color: #3E4A59;      /* Border Color */
+        --border-color: #465364;      /* Border Color (lighter for separation) */
     }
 
     /* === MAIN APPLICATION STYLES === */
@@ -541,6 +541,9 @@ st.markdown("""
         .metric-card {
             padding: 1rem;
         }
+        /* Flatten heavy gradients on small screens for clarity/performance */
+        .metric-card { background: var(--secondary-green) !important; box-shadow: none !important; }
+        .stButton > button { box-shadow: none !important; }
     }
 </style>
 """, unsafe_allow_html=True)
@@ -1444,6 +1447,130 @@ class MaharashtraAgriculturalSystem:
         else:
             return "Critical vegetation health", "#F44336"
 
+    def smooth_ndvi_series(self, values, method='rolling', window=3, polyorder=2):
+        """Return a smoothed copy of NDVI series (list of floats).
+
+        method: 'rolling' or 'savgol'
+        window: window length for rolling mean (must be odd for savgol)
+        polyorder: polynomial order for savgol
+        """
+        try:
+            import pandas as _pd
+        except Exception:
+            _pd = None
+
+        if values is None or len(values) == 0:
+            return []
+
+        vals = list(values)
+        n = len(vals)
+
+        if method == 'savgol':
+            try:
+                from scipy.signal import savgol_filter
+                w = min(window, n if n % 2 == 1 else n-1)
+                if w < 3:
+                    return vals
+                return savgol_filter(vals, w, polyorder).tolist()
+            except Exception:
+                # fallback to simple rolling
+                method = 'rolling'
+
+        if method == 'rolling' and _pd is not None:
+            try:
+                s = _pd.Series(vals)
+                sm = s.rolling(window=window, min_periods=1, center=True).mean()
+                return sm.fillna(method='bfill').fillna(method='ffill').tolist()
+            except Exception:
+                pass
+
+        # Fallback: simple moving average (centered)
+        out = []
+        half = max(1, window // 2)
+        for i in range(n):
+            lo = max(0, i - half)
+            hi = min(n, i + half + 1)
+            out.append(sum(vals[lo:hi]) / max(1, (hi - lo)))
+        return out
+
+    def detect_ndvi_anomalies(self, values, method='zscore', z_thresh=2.5):
+        """Detect anomalies in NDVI values. Returns list of boolean flags same length as values.
+
+        method: 'zscore' or 'iqr'
+        z_thresh: threshold for z-score detection
+        """
+        vals = [v for v in values] if values is not None else []
+        n = len(vals)
+        if n == 0:
+            return []
+
+        import math
+        flags = [False] * n
+
+        try:
+            import numpy as _np
+            arr = _np.array(vals, dtype=float)
+        except Exception:
+            # fallback to pure python
+            mean = sum(vals) / n
+            sd = (sum((x - mean) ** 2 for x in vals) / max(1, n)) ** 0.5
+            for i, v in enumerate(vals):
+                if sd > 0 and abs((v - mean) / sd) > z_thresh:
+                    flags[i] = True
+            return flags
+
+        if method == 'zscore':
+            mu = float(_np.nanmean(arr))
+            sd = float(_np.nanstd(arr))
+            if sd == 0:
+                return flags
+            z = (arr - mu) / sd
+            flags = list((_np.abs(z) > z_thresh).tolist())
+            return flags
+
+        # iqr method
+        q1 = float(_np.nanpercentile(arr, 25))
+        q3 = float(_np.nanpercentile(arr, 75))
+        iqr = q3 - q1
+        if iqr == 0:
+            return flags
+        lower = q1 - 1.5 * iqr
+        upper = q3 + 1.5 * iqr
+        flags = [v < lower or v > upper for v in vals]
+        return flags
+
+    def ndvi_trend_slope(self, dates, values):
+        """Compute linear trend slope of NDVI values (per index). Returns slope and intercept."""
+        try:
+            import numpy as _np
+            if values is None or len(values) < 2:
+                return 0.0, 0.0
+            # convert dates to ordinal if possible
+            x = []
+            for d in dates:
+                try:
+                    if isinstance(d, str):
+                        from datetime import datetime
+                        xd = datetime.fromisoformat(d)
+                        x.append(xd.toordinal())
+                    elif hasattr(d, 'toordinal'):
+                        x.append(d.toordinal())
+                    else:
+                        x.append(float(d))
+                except Exception:
+                    # fallback to index
+                    x = list(range(len(values)))
+                    break
+
+            if len(x) != len(values):
+                x = list(range(len(values)))
+
+            coef = _np.polyfit(_np.array(x, dtype=float), _np.array(values, dtype=float), 1)
+            slope, intercept = float(coef[0]), float(coef[1])
+            return slope, intercept
+        except Exception:
+            return 0.0, 0.0
+
     def analyze_soil_health(self, ph, nitrogen, phosphorus, potassium, farm_area=1.0):
         """Advanced soil health analysis with scientific accuracy and precision"""
         recommendations = []
@@ -2216,7 +2343,13 @@ class MaharashtraAgriculturalSystem:
         """Save analysis data to MongoDB database"""
         # Check database connection
         if not hasattr(self, 'mongo_db') or not self.mongo_db:
-            st.error("Database connection not initialized")
+            st.error("Database connection not initialized. Please check MONGODB_URI and restart the app.")
+            print("[DEBUG] mongo_db attribute missing or None in MaharashtraAgriculturalSystem")
+            return False
+
+        if not getattr(self.mongo_db, 'connected', False):
+            st.warning("MongoDB appears to be offline or not reachable. Analysis will not be persisted.")
+            print("[DEBUG] MongoCropDB.connected is False. Check MONGODB_URI, network, or MongoDB service.")
             return False
         
         # Validate input data
@@ -2246,17 +2379,37 @@ class MaharashtraAgriculturalSystem:
             
             # Save to MongoDB
             result = self.mongo_db.save_crop_analysis(analysis_doc)
-            if result and hasattr(result, 'inserted_id'):
+            if result is None:
+                # save_crop_analysis returned None -> failed to save
+                st.error("Failed to save analysis data to MongoDB. See server logs for details.")
+                print(f"[ERROR] save_crop_analysis returned None for document: {analysis_doc}")
+                return False
+            if hasattr(result, 'inserted_id'):
                 st.success(f"Analysis data saved successfully (ID: {result.inserted_id})")
                 return True
-            else:
-                st.error("Failed to save analysis data to MongoDB")
-                return False
+            # Some drivers may return an InsertOneResult-like object; handle gracefully
+            try:
+                inserted = getattr(result, 'inserted_id', None)
+                if inserted:
+                    st.success(f"Analysis data saved successfully (ID: {inserted})")
+                    return True
+            except Exception:
+                pass
+
+            # Fallback: unexpected return type
+            st.error("Failed to save analysis data to MongoDB (unexpected response). Check server logs.")
+            print(f"[ERROR] Unexpected save result: {repr(result)}")
+            return False
         except (ValueError, TypeError) as e:
             st.error(f"Error processing analysis data: {str(e)}")
             return False
+        except (ValueError, TypeError) as e:
+            st.error(f"Error processing analysis data: {str(e)}")
+            print(f"[ERROR] Data serialization error when saving analysis: {str(e)}; data: {data}")
+            return False
         except Exception as e:
-            st.error(f"Error saving to database: {str(e)}")
+            st.error(f"Error saving to database: {str(e)}. Check backend logs for details.")
+            print(f"[ERROR] Exception saving to MongoDB: {str(e)}; document: {analysis_doc}")
             return False
 
 def generate_pdf_report(district, zone, crop_type, growth_stage, farm_area, current_weather):
@@ -2283,181 +2436,327 @@ def generate_pdf_report(district, zone, crop_type, growth_stage, farm_area, curr
     pest_risk = None
     latest_image = None
     irrigation = None
+    farmer_info = None
+    model_info = None
 
     try:
         crop_analysis = st.session_state.get('crop_analysis') if 'st' in globals() else None
         soil_analysis = st.session_state.get('soil_analysis') if 'st' in globals() else None
         ndvi_trend = st.session_state.get('ndvi_trend') if 'st' in globals() else None
-        pest_risk = st.session_state.get('pest_risk') if 'st' in globals() else None
+        pest_risk = st.session_state.get('pest_analysis') if 'st' in globals() else None
         latest_image = st.session_state.get('latest_image') if 'st' in globals() else None
-        irrigation = st.session_state.get('irrigation_recommendations') if 'st' in globals() else None
+        irrigation = st.session_state.get('irrigation_analysis') if 'st' in globals() else None
+        farmer_info = st.session_state.get('farmer_info') if 'st' in globals() else None
+        model_info = st.session_state.get('model_info') if 'st' in globals() else None
     except Exception:
-        # If streamlit not available or session not set, fall back to None values
+        # Non-streamlit contexts fall back gracefully
         crop_analysis = crop_analysis or None
+
+    page_no = 0
+    def _footer(ax):
+        nonlocal page_no
+        page_no += 1
+        ax.text(0.99, 0.01, f"Page {page_no}", ha='right', va='bottom', fontsize=8, color='#666')
 
     with PdfPages(buffer) as pdf:
         # --- Cover page ---
-        plt.figure(figsize=(11.7, 8.3))  # A4 landscape
+        fig = plt.figure(figsize=(11.7, 8.3))  # A4 landscape
+        ax = fig.add_subplot(111)
+        ax.axis('off')
+        # Attempt to add a subtle background image for a nicer cover style
+        try:
+            bg_path = os.path.join(os.path.dirname(__file__), 'agri_background.jpg') if '__file__' in globals() else 'agri_background.jpg'
+            if os.path.exists(bg_path):
+                bg_img = Image.open(bg_path).convert('RGB')
+                ax.imshow(bg_img, extent=[0, 1, 0, 1], aspect='auto', alpha=0.14)
+        except Exception:
+            pass
         title = "Maharashtra Agricultural Analysis Report"
-        plt.text(0.5, 0.75, title, fontsize=20, fontweight='bold', ha='center')
-        subtitle = f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M')}"
-        plt.text(0.5, 0.68, subtitle, fontsize=10, ha='center')
+        ax.text(0.02, 0.95, "MahaAgroAI", fontsize=24, fontweight='bold', color='#2E7D32')
+        ax.text(0.5, 0.75, title, fontsize=22, fontweight='bold', ha='center', color='#0b3d0b')
+        ax.text(0.5, 0.68, f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M')}", fontsize=10, ha='center', color='#223322')
         meta = f"District: {district}    |    Zone: {zone}    |    Crop: {crop_type}    |    Stage: {growth_stage}"
-        plt.text(0.5, 0.60, meta, fontsize=11, ha='center')
-        plt.text(0.5, 0.55, f"Farm area: {farm_area} hectares", fontsize=10, ha='center')
-        plt.axis('off')
-        pdf.savefig()
-        plt.close()
+        ax.text(0.5, 0.60, meta, fontsize=11, ha='center')
+        ax.text(0.5, 0.55, f"Farm area: {farm_area} hectares", fontsize=10, ha='center')
+        if isinstance(farmer_info, dict):
+            ax.text(0.02, 0.85, f"Farmer: {farmer_info.get('full_name', 'N/A')} ({farmer_info.get('username','')})", fontsize=10)
+            ax.text(0.02, 0.81, f"Farmer ID: {farmer_info.get('farmer_id','N/A')}", fontsize=9)
+        if isinstance(model_info, dict):
+            ax.text(0.02, 0.77, f"Model: {model_info.get('name','Unknown')}  v{model_info.get('version','?')}", fontsize=9)
+        _footer(ax)
+        pdf.savefig(fig)
+        plt.close(fig)
 
-        # --- Summary page ---
-        plt.figure(figsize=(11.7, 8.3))
-        plt.suptitle('Summary', fontsize=16, fontweight='bold')
-        left = 0.05
-        y = 0.85
-        line_h = 0.06
+        # --- Detailed summary table ---
+        fig = plt.figure(figsize=(11.7, 8.3))
+        ax = fig.add_subplot(111)
+        ax.axis('off')
+        ax.text(0.5, 0.92, 'Detailed Summary', fontsize=18, fontweight='bold', ha='center')
 
-        # Pull safe values from crop_analysis if available
+        # Build a list of key-value rows
+        rows = []
+        rows.append(("Report generated", datetime.now().strftime('%Y-%m-%d %H:%M')))
+        rows.append(("District", district))
+        rows.append(("Zone", zone))
+        rows.append(("Crop", crop_type))
+        rows.append(("Growth stage", growth_stage))
+        rows.append(("Farm area (ha)", f"{farm_area}"))
+
+        # From crop_analysis
         disease = 'N/A'
-        confidence = None
+        confidence = 'N/A'
         ndvi_val = 'N/A'
         if isinstance(crop_analysis, dict):
-            disease = crop_analysis.get('disease_detected', 'N/A')
-            confidence = crop_analysis.get('confidence')
-            ndvi_val = crop_analysis.get('ndvi_value', 'N/A')
+            disease = crop_analysis.get('disease', crop_analysis.get('disease_detected', 'N/A'))
+            confidence = f"{crop_analysis.get('confidence', 'N/A')}"
+            ndvi_val = crop_analysis.get('ndvi_value', ndvi_val)
 
-        plt.text(left, y, f"Detected condition: {disease}", fontsize=12)
-        y -= line_h
-        plt.text(left, y, f"Detection confidence: {confidence if confidence is not None else 'N/A'}", fontsize=12)
-        y -= line_h
-        plt.text(left, y, f"NDVI (current): {ndvi_val}", fontsize=12)
-        y -= line_h
+        rows.append(("Detected condition", disease))
+        rows.append(("Detection confidence", confidence))
+        rows.append(("NDVI (current)", ndvi_val))
 
-        # Soil analysis summary
-        soil_ph = None
-        n = p = k = None
+        soil_ph = 'N/A'
+        n = p = k = 'N/A'
         if isinstance(soil_analysis, dict):
-            soil_ph = soil_analysis.get('soil_ph')
-            n = soil_analysis.get('nitrogen')
-            p = soil_analysis.get('phosphorus')
-            k = soil_analysis.get('potassium')
+            soil_ph = soil_analysis.get('soil_ph', soil_ph)
+            n = soil_analysis.get('nitrogen', n)
+            p = soil_analysis.get('phosphorus', p)
+            k = soil_analysis.get('potassium', k)
+            rows.append(("Soil pH", soil_ph))
+            rows.append(("Nitrogen (N)", n))
+            rows.append(("Phosphorus (P)", p))
+            rows.append(("Potassium (K)", k))
 
-        plt.text(left, y, f"Soil pH: {soil_ph if soil_ph is not None else 'N/A'}", fontsize=12)
-        y -= line_h
-        plt.text(left, y, f"N: {n if n is not None else 'N/A'}    P: {p if p is not None else 'N/A'}    K: {k if k is not None else 'N/A'}", fontsize=12)
-        y -= line_h
-
-        # Weather summary
+        # Weather
         try:
             temp = current_weather.get('temperature', 'N/A') if isinstance(current_weather, dict) else 'N/A'
             humidity = current_weather.get('humidity', 'N/A') if isinstance(current_weather, dict) else 'N/A'
+            rows.append(("Temperature (°C)", temp))
+            rows.append(("Humidity (%)", humidity))
         except Exception:
-            temp = humidity = 'N/A'
-        plt.text(left, y, f"Current weather: {temp} °C, Humidity: {humidity}%", fontsize=12)
-        plt.axis('off')
-        pdf.savefig()
-        plt.close()
+            pass
 
-        # --- Image page (if present) ---
+        # Pest risk
+        if isinstance(pest_risk, dict):
+            rows.append(("Pest overall risk", pest_risk.get('overall_risk', 'N/A')))
+
+        # Convert to table for matplotlib
+        table_data = [[k, str(v)] for k, v in rows]
+        table = plt.table(cellText=table_data, colWidths=[0.35, 0.6], cellLoc='left', loc='center')
+        table.auto_set_font_size(False)
+        table.set_fontsize(10)
+        table.scale(1, 1.5)
+        ax.add_table(table)
+        _footer(ax)
+        pdf.savefig(fig)
+        plt.close(fig)
+
+        # --- Image + Detection details ---
         if latest_image is not None:
             try:
-                plt.figure(figsize=(8, 6))
-                plt.imshow(latest_image)
-                plt.title('Crop Image (latest)')
-                plt.axis('off')
-                pdf.savefig()
-                plt.close()
-            except Exception:
-                # If image plotting fails, create a text page explaining it
-                plt.figure(figsize=(11.7, 8.3))
-                plt.text(0.1, 0.8, 'Crop image present but could not be rendered in the report.', fontsize=12)
-                plt.axis('off')
-                pdf.savefig()
-                plt.close()
-
-        # --- Soil nutrients bar chart ---
-        if any(v is not None for v in (n, p, k)):
-            try:
-                labels = []
-                values = []
-                if n is not None:
-                    labels.append('N')
-                    values.append(float(n))
-                if p is not None:
-                    labels.append('P')
-                    values.append(float(p))
-                if k is not None:
-                    labels.append('K')
-                    values.append(float(k))
-
-                plt.figure(figsize=(8, 5))
-                plt.bar(labels, values, color=['#4CAF50', '#2196F3', '#FFC107'])
-                plt.title('Soil Nutrient Levels')
-                plt.ylabel('Concentration (relative)')
-                for i, v in enumerate(values):
-                    plt.text(i, v + (max(values) * 0.02), f"{v}", ha='center')
-                pdf.savefig()
-                plt.close()
+                fig = plt.figure(figsize=(11.7, 8.3))
+                ax = fig.add_subplot(111)
+                ax.axis('off')
+                ax.imshow(latest_image)
+                caption = f"Detection: {disease} (Confidence: {confidence})"
+                ax.set_title('Crop Image and Detection', fontsize=14)
+                fig.text(0.02, 0.02, caption, fontsize=10)
+                _footer(ax)
+                pdf.savefig(fig)
+                plt.close(fig)
             except Exception:
                 pass
 
-        # --- NDVI trend plot ---
+        # --- Soil nutrients chart ---
+        if all(v not in (None, 'N/A') for v in (n, p, k)):
+            try:
+                vals = [float(n), float(p), float(k)]
+                labels = ['N', 'P', 'K']
+                fig = plt.figure(figsize=(8, 5))
+                ax = fig.add_subplot(111)
+                ax.bar(labels, vals, color=['#4CAF50', '#2196F3', '#FFC107'])
+                ax.set_title('Soil Nutrient Levels')
+                ax.set_ylabel('Concentration (relative)')
+                for i, v in enumerate(vals):
+                    ax.text(i, v + (max(vals) * 0.02), f"{v}", ha='center')
+                _footer(ax)
+                pdf.savefig(fig)
+                plt.close(fig)
+            except Exception:
+                pass
+
+        # --- NDVI trend plot (smoothed + anomalies + trend) ---
         if isinstance(ndvi_trend, (list, tuple)) and len(ndvi_trend) > 0:
             try:
                 dates = [d for d, _ in ndvi_trend]
-                vals = [v for _, v in ndvi_trend]
-                plt.figure(figsize=(10, 4))
-                plt.plot(dates, vals, marker='o', linestyle='-')
-                plt.title('NDVI Trend')
-                plt.xlabel('Date')
-                plt.ylabel('NDVI')
-                plt.grid(True, linestyle='--', alpha=0.5)
-                pdf.savefig()
-                plt.close()
+                vals = [float(v) for _, v in ndvi_trend]
+                # Prefer using the instantiated system helpers when available
+                agri = None
+                try:
+                    if 'st' in globals() and getattr(st, 'session_state', None) and 'agri_system' in st.session_state:
+                        agri = st.session_state.agri_system
+                except Exception:
+                    agri = None
+
+                if agri is not None:
+                    smoothed = agri.smooth_ndvi_series(vals, method='rolling', window=3)
+                    anomalies = agri.detect_ndvi_anomalies(smoothed, method='zscore', z_thresh=2.5)
+                    slope, intercept = agri.ndvi_trend_slope(dates, smoothed)
+                else:
+                    # Lightweight local fallbacks (avoid heavy imports)
+                    def _rolling(vals, w=3):
+                        if not vals:
+                            return []
+                        w = max(1, int(w))
+                        out = []
+                        for i in range(len(vals)):
+                            start = max(0, i - w // 2)
+                            end = min(len(vals), i + w // 2 + 1)
+                            out.append(sum(vals[start:end]) / max(1, (end - start)))
+                        return out
+
+                    def _detect_zscore(vals, z_thresh=2.5):
+                        try:
+                            import math
+                            mean = sum(vals) / len(vals)
+                            var = sum((x - mean) ** 2 for x in vals) / len(vals)
+                            sd = math.sqrt(var)
+                            if sd == 0:
+                                return [False] * len(vals)
+                            return [abs((x - mean) / sd) > z_thresh for x in vals]
+                        except Exception:
+                            return [False] * len(vals)
+
+                    def _slope_from_dates(dates, vals):
+                        try:
+                            import numpy as _np
+                            x = []
+                            for d in dates:
+                                try:
+                                    if isinstance(d, str):
+                                        from datetime import datetime
+                                        x.append(datetime.fromisoformat(d).toordinal())
+                                    elif hasattr(d, 'toordinal'):
+                                        x.append(d.toordinal())
+                                    else:
+                                        x.append(float(d))
+                                except Exception:
+                                    x = list(range(len(dates)))
+                                    break
+                            x_arr = _np.array(x, dtype=float)
+                            y_arr = _np.array(vals, dtype=float)
+                            if len(x_arr) < 2:
+                                return 0.0, float(y_arr[0]) if len(y_arr) else 0.0
+                            m, b = _np.polyfit(x_arr, y_arr, 1)
+                            return float(m), float(b)
+                        except Exception:
+                            return 0.0, float(vals[0]) if vals else 0.0
+
+                    smoothed = _rolling(vals, w=3)
+                    anomalies = _detect_zscore(smoothed, z_thresh=2.5)
+                    slope, intercept = _slope_from_dates(dates, smoothed)
+
+                fig = plt.figure(figsize=(10, 4))
+                ax = fig.add_subplot(111)
+                ax.plot(dates, vals, marker='o', linestyle='-', label='Raw NDVI', color='#888')
+                ax.plot(dates, smoothed, marker=None, linestyle='-', label='Smoothed NDVI', color='#2E7D32', linewidth=2)
+                # anomaly markers
+                an_x = [dates[i] for i, f in enumerate(anomalies) if f]
+                an_y = [smoothed[i] for i, f in enumerate(anomalies) if f]
+                if an_x:
+                    ax.scatter(an_x, an_y, color='red', marker='x', s=80, label='Anomalies')
+
+                # trend line (use numeric x for calculation)
+                try:
+                    import numpy as _np
+                    x_vals = []
+                    for d in dates:
+                        try:
+                            if isinstance(d, str):
+                                from datetime import datetime
+                                x_vals.append(datetime.fromisoformat(d).toordinal())
+                            elif hasattr(d, 'toordinal'):
+                                x_vals.append(d.toordinal())
+                            else:
+                                x_vals.append(float(d))
+                        except Exception:
+                            x_vals = list(range(len(dates)))
+                            break
+                    x_arr = _np.array(x_vals, dtype=float)
+                    y_fit = slope * x_arr + intercept
+                    ax.plot(dates, y_fit, linestyle='--', color='#FFA500', label=f'Trend (slope={slope:.4f})')
+                except Exception:
+                    pass
+
+                ax.set_title('NDVI Trend')
+                ax.set_xlabel('Date')
+                ax.set_ylabel('NDVI')
+                ax.grid(True, linestyle='--', alpha=0.5)
+                ax.legend(loc='best', fontsize=8)
+                _footer(ax)
+                pdf.savefig(fig)
+                plt.close(fig)
             except Exception:
                 pass
 
-        # --- Recommendations and actions ---
-        plt.figure(figsize=(11.7, 8.3))
-        plt.suptitle('Recommendations & Action Plan', fontsize=16, fontweight='bold')
+        # --- Pest risk breakdown (if available) ---
+        if isinstance(pest_risk, dict) and 'risks' in pest_risk:
+            try:
+                items = pest_risk.get('risks', [])
+                labels = [it.get('name', '') for it in items]
+                scores = [float(it.get('score', 0)) for it in items]
+                fig = plt.figure(figsize=(8, 5))
+                ax = fig.add_subplot(111)
+                ax.pie(scores, labels=labels, autopct='%1.1f%%', startangle=140)
+                ax.set_title('Pest Risk Breakdown')
+                _footer(ax)
+                pdf.savefig(fig)
+                plt.close(fig)
+            except Exception:
+                pass
+
+        # --- Recommendations & Action Plan (detailed) ---
+        fig = plt.figure(figsize=(11.7, 8.3))
+        ax = fig.add_subplot(111)
+        ax.axis('off')
+        ax.text(0.5, 0.92, 'Recommendations & Action Plan', fontsize=16, fontweight='bold', ha='center')
         recs = []
-        # Gather recommendations from various sources
         if isinstance(crop_analysis, dict):
             r = crop_analysis.get('recommendations')
             if r:
-                recs.append(f"Crop recommendations: {r}")
-
+                recs.append(('Crop', r))
         if isinstance(soil_analysis, dict):
-            # Example simple guideline based on NPK (if numeric)
             try:
-                if n is not None and float(n) < 2:
-                    recs.append('Apply nitrogen-rich fertilizer. Follow label rates by crop.')
+                # Simple NPK guidance example
+                if float(soil_analysis.get('nitrogen', 0)) < 50:
+                    recs.append(('Soil', 'Apply nitrogen-rich fertilizer per hectare as per crop needs.'))
+                recs.append(('Soil', f"Soil pH: {soil_analysis.get('soil_ph', 'N/A')}. Consider liming if pH < 5.5."))
             except Exception:
                 pass
-
-        if pest_risk:
-            recs.append(f"Pest risk summary: {pest_risk}")
-
-        if irrigation:
-            recs.append(f"Irrigation suggestions: {irrigation}")
+        if isinstance(pest_risk, dict):
+            recs.append(('Pest', pest_risk.get('summary', pest_risk.get('overall_risk', 'N/A'))))
+        if isinstance(irrigation, dict):
+            recs.append(('Irrigation', irrigation.get('note', str(irrigation))))
 
         if not recs:
-            recs = ['No automated recommendations available. Consider performing image/soil analysis for tailored advice.']
+            recs = [('General', 'No automated recommendations available. Collect more data for tailored advice.')]
 
-        text_y = 0.85
-        for line in recs:
-            plt.text(0.05, text_y, f"- {line}", fontsize=12)
-            text_y -= 0.06
-            if text_y < 0.1:
-                # Save current page and start a new one for overflow
-                plt.axis('off')
-                pdf.savefig()
-                plt.close()
-                plt.figure(figsize=(11.7, 8.3))
-                text_y = 0.9
+        y = 0.82
+        for source, text in recs:
+            ax.text(0.05, y, f"• [{source}] {text}", fontsize=11)
+            y -= 0.06
+            if y < 0.12:
+                _footer(ax)
+                pdf.savefig(fig)
+                plt.close(fig)
+                fig = plt.figure(figsize=(11.7, 8.3))
+                ax = fig.add_subplot(111)
+                ax.axis('off')
+                y = 0.9
 
-        plt.axis('off')
-        pdf.savefig()
-        plt.close()
+        _footer(ax)
+        pdf.savefig(fig)
+        plt.close(fig)
 
     buffer.seek(0)
     return buffer.getvalue()
@@ -3081,6 +3380,55 @@ def main():
             st.markdown(f"**🎯 Environment-Adjusted NDVI: {adjusted_ndvi:.3f}**")
             if abs(adjusted_ndvi - ndvi_value) > 0.02:
                 st.info(f"📝 Environmental factors suggest NDVI adjustment: {ndvi_value:.3f} → {adjusted_ndvi:.3f}")
+
+            # If NDVI time series available, show smoothed trend and anomalies
+            ndvi_trend = st.session_state.get('ndvi_trend') if 'ndvi_trend' in st.session_state else None
+            if isinstance(ndvi_trend, (list, tuple)) and len(ndvi_trend) > 0:
+                try:
+                    dates = [d for d, _ in ndvi_trend]
+                    vals = [float(v) for _, v in ndvi_trend]
+                    smoothed = system.smooth_ndvi_series(vals, method='rolling', window=3)
+                    anomalies = system.detect_ndvi_anomalies(smoothed, method='zscore', z_thresh=2.5)
+                    slope, intercept = system.ndvi_trend_slope(dates, smoothed)
+
+                    import plotly.graph_objects as _go
+                    fig_ts = _go.Figure()
+                    fig_ts.add_trace(_go.Scatter(x=dates, y=vals, mode='lines+markers', name='Raw NDVI', line=dict(color='#888')))
+                    fig_ts.add_trace(_go.Scatter(x=dates, y=smoothed, mode='lines', name='Smoothed NDVI', line=dict(color='#2E7D32', width=3)))
+                    # anomalies
+                    anom_x = [dates[i] for i, f in enumerate(anomalies) if f]
+                    anom_y = [smoothed[i] for i, f in enumerate(anomalies) if f]
+                    if anom_x:
+                        fig_ts.add_trace(_go.Scatter(x=anom_x, y=anom_y, mode='markers', name='Anomalies', marker=dict(color='red', size=10, symbol='x')))
+
+                    # trend line
+                    try:
+                        import numpy as _np
+                        # x for trend: convert dates to ordinal if possible
+                        x_vals = []
+                        for d in dates:
+                            try:
+                                if isinstance(d, str):
+                                    from datetime import datetime
+                                    x_vals.append(datetime.fromisoformat(d).toordinal())
+                                elif hasattr(d, 'toordinal'):
+                                    x_vals.append(d.toordinal())
+                                else:
+                                    x_vals.append(float(d))
+                            except Exception:
+                                x_vals = list(range(len(dates)))
+                                break
+                        x_arr = _np.array(x_vals, dtype=float)
+                        y_fit = slope * x_arr + intercept
+                        # convert back to display x (using dates)
+                        fig_ts.add_trace(_go.Scatter(x=dates, y=list(y_fit), mode='lines', name='Trend', line=dict(color='#FFA500', dash='dash')))
+                    except Exception:
+                        pass
+
+                    fig_ts.update_layout(title='NDVI Time Series', xaxis_title='Date', yaxis_title='NDVI', height=350)
+                    st.plotly_chart(fig_ts, use_container_width=True)
+                except Exception as _e:
+                    st.warning(f"NDVI timeseries plotting failed: {_e}")
         
         # Enhanced Results Display Section
         if 'crop_analysis' in st.session_state and st.session_state.crop_analysis is not None:
