@@ -12,7 +12,6 @@ from io import BytesIO
 import hashlib
 from auth_database import FarmerAuthDB
 import os
-from streamlit_option_menu import option_menu
 
 # Configure the login page
 st.set_page_config(
@@ -26,167 +25,190 @@ st.set_page_config(
 if 'auth_db' not in st.session_state:
     st.session_state.auth_db = FarmerAuthDB()
 
-# Enhanced Agricultural Theme with Modern UI
+# Beautiful Agricultural CSS with Enhanced Styling
 st.markdown("""
 <style>
-    /* === ROOT VARIABLES === */
-:root {
-    --card-bg: #0f172a;
-    --card-surface: #1e293b;
-    --accent: #22c55e;
-    --accent-dark: #15803d;
-    --text: #e6eef0;
-    --text-secondary: #94a3b8;
-    --card-shadow: 0 10px 30px rgba(2,6,23,0.7);
-    --input-bg: rgba(15, 23, 42, 0.8);
-    --success: #15803d;
-    --success-gradient: linear-gradient(135deg, #22c55e 0%, #15803d 100%);
-    --warning: #854d0e;
-    --danger: #991b1b;
-    --border-radius: 1rem;
-}
-
-/* === PAGE LAYOUT === */
-.stApp {
-    background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
-    min-height: 100vh;
-}
-
-.main .block-container {
-    padding-top: 2rem;
-    max-width: 800px;
-}
-
-/* === HIDE STREAMLIT ELEMENTS === */
-#MainMenu, footer, header, [data-testid="stToolbar"] {
-    display: none !important;
-}
-
-.stApp > div:first-child {
-    margin-top: -80px;
-}
-    
-    /* === CORE STYLES === */
-    .main {
-        background: linear-gradient(180deg,#081018 0%, #0e1117 100%);
-        color: var(--text);
-        font-family: 'Inter', 'Segoe UI', sans-serif;
+    /* === GLOBAL VARIABLES === */
+    :root {
+        --primary-green: #1B5E20;
+        --secondary-green: #388E3C;
+        --accent-green: #43A047;
+        --earth-brown: #3E2723;
+        --soil-brown: #5D4037;
+        --sky-blue: #0D47A1;
+        --water-blue: #0277BD;
+        --sunshine-yellow: #F57F17;
+        --harvest-orange: #EF6C00;
+        --danger-red: #C62828;
+        --warning-amber: #FF8F00;
+        --text-white: #FFFFFF;
+        --text-dark: #1A1A1A;
+        --bg-gradient: linear-gradient(135deg, #004D40 0%, #1B5E20 50%, #0D47A1 100%);
+        --card-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        --border-radius: 20px;
+        --success-gradient: linear-gradient(135deg, #2E7D32 0%, #388E3C 100%);
+        --warning-gradient: linear-gradient(135deg, #F57F17 0%, #FF8F00 100%);
+        --danger-gradient: linear-gradient(135deg, #C62828 0%, #D32F2F 100%);
     }
-
-    /* === LOGIN CARD === */
-    .login-card {
-        background-color: var(--card-surface);
-        padding: 2.5rem;
-        border-radius: 1.5rem;
-        box-shadow: var(--card-shadow);
+    
+    /* === HIDE STREAMLIT ELEMENTS === */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+    .stApp > div:first-child {margin-top: -80px;}
+    
+    /* === BODY & BACKGROUND === */
+    .stApp {
+        background: var(--bg-gradient);
+        font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    
+    /* === ANIMATED BACKGROUND === */
+    .stApp::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: 
+            radial-gradient(circle at 20% 80%, rgba(76, 175, 80, 0.1) 0%, transparent 50%),
+            radial-gradient(circle at 80% 20%, rgba(25, 118, 210, 0.1) 0%, transparent 50%),
+            radial-gradient(circle at 40% 40%, rgba(255, 167, 38, 0.1) 0%, transparent 50%);
+        animation: backgroundMove 20s ease-in-out infinite;
+        z-index: -1;
+    }
+    
+    @keyframes backgroundMove {
+        0%, 100% { transform: translateX(0px) translateY(0px); }
+        25% { transform: translateX(-20px) translateY(-10px); }
+        50% { transform: translateX(20px) translateY(-20px); }
+        75% { transform: translateX(-10px) translateY(10px); }
+    }
+    
+    /* === MAIN CONTAINER === */
+    .login-container {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: var(--border-radius);
+        padding: 3rem;
+        margin: 2rem auto;
         max-width: 480px;
-        margin: 1rem auto;
+        box-shadow: var(--card-shadow);
+        border: 1px solid rgba(255, 255, 255, 0.2);
         position: relative;
-    }
-
-    /* === TOP BANNER === */
-    .top-banner {
-        text-align: center;
-        background-color: var(--accent);
-        padding: 1rem;
-        border-radius: 1rem;
-        margin-bottom: 2rem;
-        max-width: 1100px;
-        margin-left: auto;
-        margin-right: auto;
+        overflow: hidden;
     }
     
-    /* === FORM ELEMENTS === */
-.stTextInput > div > div > input,
-.stTextArea > div > div > textarea {
-    background-color: var(--input-bg) !important;
-    border-color: rgba(255,255,255,0.1) !important;
-    border-radius: var(--border-radius) !important;
-    color: var(--text) !important;
-    font-size: 1rem !important;
-    padding: 0.75rem 1rem !important;
-    transition: all 0.2s ease !important;
-}
-
-.stTextInput > div > div > input:focus,
-.stTextArea > div > div > textarea:focus {
-    border-color: var(--accent) !important;
-    box-shadow: 0 0 0 2px rgba(34,197,94,0.2) !important;
-}
-
-/* Form Labels */
-.stTextInput > label,
-.stTextArea > label {
-    color: var(--text-secondary) !important;
-    font-size: 0.95rem !important;
-}
-
-/* Buttons */
-button[kind="primary"] {
-    background: var(--success-gradient) !important;
-    border: none !important;
-    border-radius: var(--border-radius) !important;
-    color: white !important;
-    font-size: 1rem !important;
-    font-weight: 600 !important;
-    padding: 0.75rem 2rem !important;
-    transition: all 0.3s ease !important;
-}
-
-button[kind="primary"]:hover {
-    box-shadow: 0 4px 15px rgba(34,197,94,0.4) !important;
-    transform: translateY(-2px) !important;
-}
-
-button[kind="primary"]:active {
-    transform: translateY(0) !important;
-}
-
-/* Secondary Buttons */
-button[kind="secondary"] {
-    background: transparent !important;
-    border: 1px solid var(--accent) !important;
-    border-radius: var(--border-radius) !important;
-    color: var(--accent) !important;
-    font-size: 0.95rem !important;
-    padding: 0.6rem 1.5rem !important;
-    transition: all 0.2s ease !important;
-}
-
-button[kind="secondary"]:hover {
-    background: rgba(34,197,94,0.1) !important;
-}
-
-/* Checkboxes */
-.stCheckbox > label > div[role="checkbox"] {
-    border-color: var(--accent) !important;
-    border-radius: 4px !important;
-}
-
-.stCheckbox > label > div[data-checked="true"] {
-    background-color: var(--accent) !important;
-}
-
-    /* === OPTION MENU === */
-    .option-menu {
-        display: flex;
-        justify-content: center;
-        margin-bottom: 2rem;
+    .login-container::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(90deg, var(--primary-green), var(--secondary-green), var(--sky-blue));
     }
-
-    .nav-link {
-        color: var(--text) !important;
-        background: var(--card-bg) !important;
-        border-radius: 8px !important;
-        margin: 0 0.5rem !important;
-        padding: 0.75rem 2rem !important;
-        transition: all 0.3s ease !important;
+    
+    /* === HEADER STYLES === */
+    .login-header {
+        text-align: center;
+        margin-bottom: 2.5rem;
     }
-
-    .nav-link.active {
-        background: var(--success-gradient) !important;
-        color: white !important;
-        transform: translateY(-2px) !important;
+    
+    .app-logo {
+        font-size: 4rem;
+        margin-bottom: 0.5rem;
+        animation: bounce 2s ease-in-out infinite;
+    }
+    
+    @keyframes bounce {
+        0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+        40% { transform: translateY(-10px); }
+        60% { transform: translateY(-5px); }
+    }
+    
+    .app-title {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--primary-green);
+        margin-bottom: 0.5rem;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .app-subtitle {
+        font-size: 1.1rem;
+        color: var(--earth-brown);
+        font-weight: 400;
+        opacity: 0.8;
+    }
+    
+    /* === FORM STYLES === */
+    .stTextInput > div > div > input {
+        background: rgba(255, 255, 255, 0.9);
+        border: 2px solid rgba(76, 175, 80, 0.3);
+        border-radius: 12px;
+        padding: 0.8rem 1rem;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    }
+    
+    .stTextInput > div > div > input:focus {
+        border-color: var(--secondary-green);
+        box-shadow: 0 0 20px rgba(76, 175, 80, 0.2);
+        transform: translateY(-2px);
+    }
+    
+    /* === BUTTON STYLES === */
+    .stButton > button {
+        background: linear-gradient(135deg, var(--secondary-green) 0%, var(--primary-green) 100%);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        padding: 0.8rem 2rem;
+        font-size: 1.1rem;
+        font-weight: 600;
+        width: 100%;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 6px 20px rgba(76, 175, 80, 0.3);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .stButton > button:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 30px rgba(76, 175, 80, 0.4);
+        background: linear-gradient(135deg, var(--primary-green) 0%, var(--secondary-green) 100%);
+    }
+    
+    .stButton > button:active {
+        transform: translateY(0px);
+    }
+    
+    /* === TABS STYLING === */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 8px;
+        background: rgba(76, 175, 80, 0.1);
+        border-radius: 12px;
+        padding: 0.5rem;
+    }
+    
+    .stTabs [data-baseweb="tab"] {
+        background: transparent;
+        border: none;
+        border-radius: 8px;
+        color: var(--primary-green);
+        font-weight: 600;
+        padding: 0.8rem 1.5rem;
+        transition: all 0.3s ease;
+    }
+    
+    .stTabs [data-baseweb="tab"][aria-selected="true"] {
+        background: var(--secondary-green);
+        color: white;
+        box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
     }
     
     /* === SUCCESS/ERROR MESSAGES === */
@@ -241,227 +263,223 @@ button[kind="secondary"]:hover {
         opacity: 0.7;
     }
     
-    /* === SUCCESS/ERROR === */
-    .stSuccess {
-        background: var(--success-gradient) !important;
-        color: white !important;
-        border: none !important;
-        padding: 1rem !important;
-    }
-
-    .stError {
-        background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%) !important;
-        color: white !important;
-        border: none !important;
-    }
-
-    /* === RESPONSIVE === */
-    @media (max-width: 600px) {
-        .login-card { 
-            padding: 1.5rem;
-            max-width: calc(100% - 2rem);
+    /* === RESPONSIVE DESIGN === */
+    @media (max-width: 768px) {
+        .login-container {
+            margin: 1rem;
+            padding: 2rem;
+            max-width: 100%;
         }
-        .top-banner {
-            margin-bottom: 1rem;
-            padding: 0.6rem;
+        
+        .app-title {
+            font-size: 1.6rem;
         }
-        h1 { font-size: 1.4rem; }
-    }
-
-    @media (max-width: 420px) {
-        .stApp .option-menu > div > div {
-            flex-direction: column !important;
+        
+        .app-subtitle {
+            font-size: 1rem;
         }
     }
-
-    @media (max-width: 400px) {
-        .top-banner { display: none; }
+    
+    /* === LOADING ANIMATION === */
+    .stSpinner > div {
+        border-color: var(--secondary-green) transparent var(--secondary-green) transparent;
     }
-
-    /* === HIDE STREAMLIT === */
-    #MainMenu { visibility: hidden; }
-    footer { visibility: hidden; }
-    header { visibility: hidden; }
-    .stApp > header { display: none !important; }
+    
+    /* === FORM VALIDATION === */
+    .field-error {
+        color: var(--danger-red);
+        font-size: 0.9rem;
+        margin-top: 0.3rem;
+        font-weight: 500;
+    }
+    
+    /* === WELCOME MESSAGE === */
+    .welcome-card {
+        background: linear-gradient(135deg, var(--secondary-green), var(--accent-green));
+        color: white;
+        padding: 2rem;
+        border-radius: var(--border-radius);
+        text-align: center;
+        box-shadow: var(--card-shadow);
+        margin: 2rem 0;
+    }
+    
+    .welcome-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+    }
+    
+    .welcome-subtitle {
+        font-size: 1.2rem;
+        opacity: 0.9;
+        margin-bottom: 2rem;
+    }
 </style>
 """, unsafe_allow_html=True)
 
 def show_login_page():
-    """Display the enhanced login/registration interface"""
+    """Display the main login/registration interface"""
     
-    # Top banner (hides on small screens via CSS)
-    st.markdown(
-        """
-        <div class="top-banner">
-            <h1 style="color:white; margin:0;">🌾 MahaAgroAI</h1>
-            <div style="color:white; opacity:0.95; font-size:0.95rem">Secure Farmer Access Portal</div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    # Tabs using option_menu
-    selected = option_menu(
-        menu_title=None,
-        options=["Login", "Register"],
-        icons=["lock-fill", "person-plus-fill"],
-        orientation="horizontal",
-        styles={
-            "container": {"justify-content": "center"},
-            "icon": {"color": "#22c55e", "font-size": "18px"},
-            "nav-link-selected": {"background-color": "#22c55e", "color": "white"}
-        }
-    )
-
-    if selected == "Login":
+    # Show weather alert if available
+    current_month = datetime.now().month
+    if 6 <= current_month <= 9:  # Monsoon season
+        st.warning("""
+            🌧️ **Monsoon Alert**
+            - Keep track of rainfall patterns
+            - Monitor crop disease risks
+            - Ensure proper drainage
+        """)
+    elif 10 <= current_month <= 2:  # Winter season
+        st.info("""
+            ❄️ **Rabi Season Guidelines**
+            - Watch for frost warnings
+            - Maintain soil moisture
+            - Monitor cold-weather crops
+        """)
+    else:  # Summer season
+        st.warning("""
+            ☀️ **Summer Advisory**
+            - Practice water conservation
+            - Watch for heat stress in crops
+            - Consider crop insurance
+        """)
+    
+    # Create main container
+    st.markdown('<div class="login-container">', unsafe_allow_html=True)
+    
+    # Header section
+    st.markdown("""
+    <div class="login-header">
+        <div class="app-logo">🌾</div>
+        <h1 class="app-title">Maharashtra Krushi Mitra</h1>
+        <p class="app-subtitle">Advanced AI-Powered Agricultural System</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Main tabs for Login and Registration
+    tab1, tab2 = st.tabs(["🚪 Login", "📝 Register"])
+    
+    with tab1:
         show_login_form()
-    else:
+    
+    with tab2:
         show_registration_form()
+    
+    # Footer
+    st.markdown("""
+    <div class="login-footer">
+        <p class="footer-text">
+            🌱 Empowering Maharashtra Farmers with AI Technology<br>
+            © 2025 Maharashtra Krushi Mitra | Secure & Reliable
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    st.markdown('</div>', unsafe_allow_html=True)
 
 def show_login_form():
-    """Display the enhanced login form with modern UI"""
+    """Login form for existing farmers"""
+    st.markdown("### 🌾 Welcome Back, Kisan!")
+    st.markdown("""
+        Enter your credentials to access:
+        - 🌱 AI-Powered Crop Disease Detection
+        - 🌦️ Smart Weather Monitoring
+        - 🚜 Agricultural Resource Planning
+        - 📊 Farm Analytics Dashboard
+    """)
     
-    st.markdown(
-        """
-        <div class="form-header">
-            <h2>Welcome Back, Kisan! 🌾</h2>
-            <p>Access your smart farming tools</p>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
-    with st.form("login_form", clear_on_submit=False):
-        # Username field with icon
+    # Show current agricultural season
+    current_month = datetime.now().month
+    if 6 <= current_month <= 9:
+        season = "Kharif Season 🌧️"
+    elif 10 <= current_month <= 2:
+        season = "Rabi Season ❄️"
+    else:
+        season = "Zaid Season ☀️"
+    
+    st.info(f"Current Growing Period: **{season}**")
+    
+    with st.form("login_form"):
+        # Username/Email field
         username = st.text_input(
-            "Username or Email",
+            "👤 Username or Email",
             placeholder="Enter your username or email",
-            help="Use the email or username you registered with"
+            help="Use the username or email you registered with"
         )
         
-        # Password with visibility toggle
-        password_col, toggle_col = st.columns([4,1])
-        with password_col:
-            password = st.text_input(
-                "Password",
-                type="password" if not st.session_state.get('show_password', False) else "text",
-                placeholder="Enter your password",
-                help="Enter your password"
+        # Password field
+        password = st.text_input(
+            "🔒 Password",
+            type="password",
+            placeholder="Enter your password",
+            help="Password is case-sensitive"
+        )
+        
+        # Remember me checkbox
+        remember_me = st.checkbox("🔄 Keep me logged in", help="Stay logged in for 7 days")
+        
+        # Login button
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            login_button = st.form_submit_button(
+                "🚀 LOGIN TO DASHBOARD",
+                use_container_width=True
             )
-        with toggle_col:
-            st.checkbox(
-                "👁️",
-                key="show_password",
-                help="Show/hide password"
-            )
-        
-        # Remember me and submit button
-        remember = st.checkbox(
-            "Keep me signed in",
-            help="Stay logged in for 7 days"
-        )
-        
-        submit_button = st.form_submit_button(
-            "Sign In",
-            use_container_width=True,
-            type="primary"
-        )
-        
-        # Current season indicator with modern styling
-        current_month = datetime.now().month
-        if 6 <= current_month <= 9:
-            season = "Kharif Season 🌧️"
-            season_desc = "Monitor monsoon crops"
-        elif 10 <= current_month <= 2:
-            season = "Rabi Season ❄️"
-            season_desc = "Track winter crops"
-        else:
-            season = "Zaid Season ☀️"
-            season_desc = "Manage summer crops"
-            
-        st.markdown(
-            f"""
-            <div style="padding:1rem; background:var(--card-bg); border-radius:0.8rem; margin-top:1rem;">
-                <div style="font-size:0.9rem; opacity:0.8;">Current Growing Period</div>
-                <div style="font-size:1.2rem; font-weight:600; margin-top:0.3rem;">{season}</div>
-                <div style="font-size:0.85rem; opacity:0.7; margin-top:0.2rem;">{season_desc}</div>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
+    
     # Process login
-    if submit_button:
+    if login_button:
         if not username or not password:
-            st.error("Please enter both username/email and password")
-            return
-            
-        with st.spinner("Authenticating..."):
-            auth_result = st.session_state.auth_db.authenticate_farmer(
-                username, password, ip_address="127.0.0.1"
-            )
-            
-            if auth_result["success"]:
-                session_result = st.session_state.auth_db.create_session(
-                    auth_result["farmer_id"],
-                    ip_address="127.0.0.1",
-                    user_agent="Streamlit Browser"
+            st.error("❌ Please enter both username/email and password")
+        else:
+            with st.spinner("🔍 Authenticating farmer..."):
+                # Authenticate farmer
+                auth_result = st.session_state.auth_db.authenticate_farmer(
+                    username, password, ip_address="127.0.0.1"
                 )
                 
-                if session_result["success"]:
-                    st.session_state.authenticated = True
-                    st.session_state.farmer_id = auth_result["farmer_id"]
-                    st.session_state.username = auth_result["username"]
-                    st.session_state.full_name = auth_result["full_name"]
-                    st.session_state.session_id = session_result["session_id"]
-                    st.session_state.session_token = session_result["session_token"]
+                if auth_result["success"]:
+                    # Create session
+                    session_result = st.session_state.auth_db.create_session(
+                        auth_result["farmer_id"],
+                        ip_address="127.0.0.1",
+                        user_agent="Streamlit Browser"
+                    )
                     
-                    st.success("✅ Login successful!")
-                    st.info("🌾 Loading your agricultural dashboard...")
-                    st.experimental_rerun()
+                    if session_result["success"]:
+                        # Store session in streamlit session state
+                        st.session_state.authenticated = True
+                        st.session_state.farmer_id = auth_result["farmer_id"]
+                        st.session_state.username = auth_result["username"]
+                        st.session_state.full_name = auth_result["full_name"]
+                        st.session_state.session_id = session_result["session_id"]
+                        st.session_state.session_token = session_result["session_token"]
+                        
+                        st.success(f"✅ Welcome back, {auth_result['full_name']}!")
+                        
+                        # Redirect message
+                        st.info("🚀 Redirecting to your agricultural dashboard...")
+                        st.markdown("""
+                        <script>
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 2000);
+                        </script>
+                        """, unsafe_allow_html=True)
+                    else:
+                        st.error("❌ Session creation failed. Please try again.")
                 else:
-                    st.error("Session creation failed. Please try again.")
-            else:
-                st.error(auth_result["message"])
-
-    # Quick access buttons with modern styling
-    st.markdown("<br>", unsafe_allow_html=True)
+                    st.error(f"❌ {auth_result['message']}")
     
+    # Additional options
+    st.markdown("---")
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("🔑 Reset Password", use_container_width=True):
-            st.info("Password reset coming soon!")
+        if st.button("🔑 Forgot Password?", help="Reset your password"):
+            st.info("📧 Password reset functionality coming soon!")
     with col2:
-        if st.button("❓ Need Help?", use_container_width=True):
-            st.info("Contact: support@maharashtra-krushi.gov.in")
-            
-    # Feature highlights
-    st.markdown(
-        """
-        <div style="margin-top:2rem;">
-            <div style="font-size:0.9rem; opacity:0.8; margin-bottom:1rem;">Available Tools:</div>
-            <div class="feature-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
-                <div style="background:var(--card-bg); padding:1rem; border-radius:0.8rem;">
-                    <div style="font-size:1.2rem;">🌱 Disease Detection</div>
-                    <div style="font-size:0.85rem; opacity:0.7; margin-top:0.3rem;">AI-powered crop health analysis</div>
-                </div>
-                <div style="background:var(--card-bg); padding:1rem; border-radius:0.8rem;">
-                    <div style="font-size:1.2rem;">🌦️ Weather Monitor</div>
-                    <div style="font-size:0.85rem; opacity:0.7; margin-top:0.3rem;">Real-time weather insights</div>
-                </div>
-                <div style="background:var(--card-bg); padding:1rem; border-radius:0.8rem;">
-                    <div style="font-size:1.2rem;">🚜 Resource Planner</div>
-                    <div style="font-size:0.85rem; opacity:0.7; margin-top:0.3rem;">Optimize farm operations</div>
-                </div>
-                <div style="background:var(--card-bg); padding:1rem; border-radius:0.8rem;">
-                    <div style="font-size:1.2rem;">📊 Farm Analytics</div>
-                    <div style="font-size:0.85rem; opacity:0.7; margin-top:0.3rem;">Data-driven insights</div>
-                </div>
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+        if st.button("❓ Need Help?", help="Get support"):
+            st.info("📞 Contact: support@maharashtra-krushi.gov.in")
 
 def show_registration_form():
     """Registration form for new farmers"""
