@@ -24,6 +24,7 @@ import requests
 from PIL import Image
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
+from matplotlib.patches import Rectangle
 import plotly.express as px
 import plotly.graph_objects as go
 from dotenv import load_dotenv
@@ -69,7 +70,7 @@ def download_file(url, filename):
             print(f"{os.path.basename(filename)} downloaded successfully.")
     else:
         try:
-            st.info(f"{os.path.basename(filename)} already exists.")
+            st.info(f"{os.path.basename(filename)} already exits")
         except Exception:
             print(f"{os.path.basename(filename)} already exists.")
 
@@ -2214,207 +2215,347 @@ class MaharashtraAgriculturalSystem:
             return False
 
 def generate_pdf_report(district, zone, crop_type, growth_stage, farm_area, current_weather):
-    """Generate a comprehensive, multi-page PDF report of crop analysis.
-
-    This function intentionally keeps the same signature as the existing call sites.
-    Extra data are read from `st.session_state` when available (so we don't need to
-    change every call site). The report includes:
-      - Cover page (title/date)
-      - Summary with key metrics (disease, confidence, NDVI, soil pH, NPK)
-      - Crop image (if available in session state)
-      - Soil nutrients bar chart (if soil analysis present)
-      - NDVI trend plot (if ndvi_trend present)
-      - Recommendations and quick action checklist
-
-    Non-invasive: does not modify external state or call sites.
+    """Generate a professional 4-page PDF report with charts including:
+    - Page 1: Summary with Key Alerts
+    - Page 2: NDVI Trend Chart
+    - Page 3: Soil Nutrients & Cost Analysis
+    - Page 4: Irrigation & Action Plan
     """
     buffer = BytesIO()
+    pdf = PdfPages(buffer)
 
-    # Safely pull optional data from the current Streamlit session (if running under Streamlit)
-    crop_analysis = None
-    soil_analysis = None
-    ndvi_trend = None
-    pest_risk = None
-    latest_image = None
-    irrigation = None
-
+    # Safely pull optional data from the current Streamlit session
     try:
         crop_analysis = st.session_state.get('crop_analysis') if 'st' in globals() else None
         soil_analysis = st.session_state.get('soil_analysis') if 'st' in globals() else None
+        pest_analysis = st.session_state.get('pest_analysis') if 'st' in globals() else None
         ndvi_trend = st.session_state.get('ndvi_trend') if 'st' in globals() else None
-        pest_risk = st.session_state.get('pest_risk') if 'st' in globals() else None
-        latest_image = st.session_state.get('latest_image') if 'st' in globals() else None
-        irrigation = st.session_state.get('irrigation_recommendations') if 'st' in globals() else None
+        irrigation_analysis = st.session_state.get('irrigation_recommendations') if 'st' in globals() else None
     except Exception:
-        # If streamlit not available or session not set, fall back to None values
-        crop_analysis = crop_analysis or None
+        crop_analysis = soil_analysis = pest_analysis = ndvi_trend = irrigation_analysis = None
 
-    with PdfPages(buffer) as pdf:
-        # --- Cover page ---
-        plt.figure(figsize=(11.7, 8.3))  # A4 landscape
-        title = "Maharashtra Agricultural Analysis Report"
-        plt.text(0.5, 0.75, title, fontsize=20, fontweight='bold', ha='center')
-        subtitle = f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M')}"
-        plt.text(0.5, 0.68, subtitle, fontsize=10, ha='center')
-        meta = f"District: {district}    |    Zone: {zone}    |    Crop: {crop_type}    |    Stage: {growth_stage}"
-        plt.text(0.5, 0.60, meta, fontsize=11, ha='center')
-        plt.text(0.5, 0.55, f"Farm area: {farm_area} hectares", fontsize=10, ha='center')
-        plt.axis('off')
-        pdf.savefig()
-        plt.close()
+    ################################################
+    # PAGE 1 — SUMMARY WITH ALERTS
+    ################################################
+    fig = plt.figure(figsize=(8.27, 11.69))
+    fig.patch.set_facecolor("white")
 
-        # --- Summary page ---
-        plt.figure(figsize=(11.7, 8.3))
-        plt.suptitle('Summary', fontsize=16, fontweight='bold')
-        left = 0.05
-        y = 0.85
-        line_h = 0.06
+    fig.text(0.5, 0.95, "Maharashtra Smart Agriculture Report",
+             ha="center", fontsize=20, fontweight="bold", color="#1B5E20")
 
-        # Pull safe values from crop_analysis if available
-        disease = 'N/A'
-        confidence = None
-        ndvi_val = 'N/A'
-        if isinstance(crop_analysis, dict):
-            disease = crop_analysis.get('disease_detected', 'N/A')
-            confidence = crop_analysis.get('confidence')
-            ndvi_val = crop_analysis.get('ndvi_value', 'N/A')
+    fig.text(0.5, 0.92,
+             f"Generated: {datetime.now().strftime('%d %B %Y %H:%M')}",
+             ha="center", fontsize=10, color="#666")
 
-        plt.text(left, y, f"Detected condition: {disease}", fontsize=12)
-        y -= line_h
-        plt.text(left, y, f"Detection confidence: {confidence if confidence is not None else 'N/A'}", fontsize=12)
-        y -= line_h
-        plt.text(left, y, f"NDVI (current): {ndvi_val}", fontsize=12)
-        y -= line_h
+    info = f"""
+District : {district}
+Zone     : {zone}
+Crop     : {crop_type}
+Stage    : {growth_stage}
+Area     : {farm_area} ha
+Weather  : {current_weather}
+"""
 
-        # Soil analysis summary
-        soil_ph = None
-        n = p = k = None
-        if isinstance(soil_analysis, dict):
-            soil_ph = soil_analysis.get('soil_ph')
-            n = soil_analysis.get('nitrogen')
-            p = soil_analysis.get('phosphorus')
-            k = soil_analysis.get('potassium')
+    fig.text(
+        0.1, 0.80, info, fontsize=11,
+        bbox=dict(boxstyle="round", facecolor="#E8F5E9", pad=1, edgecolor="#4CAF50", linewidth=2)
+    )
 
-        plt.text(left, y, f"Soil pH: {soil_ph if soil_ph is not None else 'N/A'}", fontsize=12)
-        y -= line_h
-        plt.text(left, y, f"N: {n if n is not None else 'N/A'}    P: {p if p is not None else 'N/A'}    K: {k if k is not None else 'N/A'}", fontsize=12)
-        y -= line_h
+    # Key Alerts Section
+    fig.text(0.1, 0.62, "🔴 Key Alerts", fontsize=14, fontweight="bold", color="#D32F2F")
 
-        # Weather summary
-        try:
-            temp = current_weather.get('temperature', 'N/A') if isinstance(current_weather, dict) else 'N/A'
-            humidity = current_weather.get('humidity', 'N/A') if isinstance(current_weather, dict) else 'N/A'
-        except Exception:
-            temp = humidity = 'N/A'
-        plt.text(left, y, f"Current weather: {temp} °C, Humidity: {humidity}%", fontsize=12)
-        plt.axis('off')
-        pdf.savefig()
-        plt.close()
+    y = 0.58
 
-        # --- Image page (if present) ---
-        if latest_image is not None:
-            try:
-                plt.figure(figsize=(8, 6))
-                plt.imshow(latest_image)
-                plt.title('Crop Image (latest)')
-                plt.axis('off')
-                pdf.savefig()
-                plt.close()
-            except Exception:
-                # If image plotting fails, create a text page explaining it
-                plt.figure(figsize=(11.7, 8.3))
-                plt.text(0.1, 0.8, 'Crop image present but could not be rendered in the report.', fontsize=12)
-                plt.axis('off')
-                pdf.savefig()
-                plt.close()
+    # Disease Alert
+    if crop_analysis and crop_analysis.get("disease_detected") and "no disease" not in str(crop_analysis.get("disease_detected")).lower():
+        fig.text(0.12, y,
+                 f"⚠️  Disease Detected: {crop_analysis['disease_detected']}",
+                 fontsize=11, color="red", fontweight="bold")
+        y -= 0.04
+    else:
+        fig.text(0.12, y,
+                 "✅ No disease detected",
+                 fontsize=11, color="green", fontweight="bold")
+        y -= 0.04
 
-        # --- Soil nutrients bar chart ---
-        if any(v is not None for v in (n, p, k)):
-            try:
-                labels = []
-                values = []
-                if n is not None:
-                    labels.append('N')
-                    values.append(float(n))
-                if p is not None:
-                    labels.append('P')
-                    values.append(float(p))
-                if k is not None:
-                    labels.append('K')
-                    values.append(float(k))
+    # Pest Alert
+    if pest_analysis and pest_analysis.get("pest_found"):
+        fig.text(0.12, y,
+                 f"⚠️  Pest Alert: {pest_analysis['pest_found']}",
+                 fontsize=11, color="red", fontweight="bold")
+        y -= 0.04
+    else:
+        fig.text(0.12, y,
+                 "✅ No pest attack detected",
+                 fontsize=11, color="green", fontweight="bold")
+        y -= 0.04
 
-                plt.figure(figsize=(8, 5))
-                plt.bar(labels, values, color=['#4CAF50', '#2196F3', '#FFC107'])
-                plt.title('Soil Nutrient Levels')
-                plt.ylabel('Concentration (relative)')
-                for i, v in enumerate(values):
-                    plt.text(i, v + (max(values) * 0.02), f"{v}", ha='center')
-                pdf.savefig()
-                plt.close()
-            except Exception:
-                pass
+    # Cost Summary Box
+    total_cost = 0
+    if soil_analysis and isinstance(soil_analysis, dict):
+        total_cost = soil_analysis.get('total_cost', 0)
 
-        # --- NDVI trend plot ---
-        if isinstance(ndvi_trend, (list, tuple)) and len(ndvi_trend) > 0:
-            try:
-                dates = [d for d, _ in ndvi_trend]
-                vals = [v for _, v in ndvi_trend]
-                plt.figure(figsize=(10, 4))
-                plt.plot(dates, vals, marker='o', linestyle='-')
-                plt.title('NDVI Trend')
-                plt.xlabel('Date')
-                plt.ylabel('NDVI')
-                plt.grid(True, linestyle='--', alpha=0.5)
-                pdf.savefig()
-                plt.close()
-            except Exception:
-                pass
+    fig.text(0.1, y - 0.08, "💰 Quick Cost Summary", fontsize=13, fontweight="bold", color="#F57C00")
+    y -= 0.13
+    fig.text(
+        0.12, y, f"Total Fertilizer Cost: ₹{total_cost:,.2f}",
+        fontsize=12, fontweight="bold", color="#E65100",
+        bbox=dict(boxstyle="round", facecolor="#FFF9C4", pad=0.5)
+    )
 
-        # --- Recommendations and actions ---
-        plt.figure(figsize=(11.7, 8.3))
-        plt.suptitle('Recommendations & Action Plan', fontsize=16, fontweight='bold')
-        recs = []
-        # Gather recommendations from various sources
-        if isinstance(crop_analysis, dict):
-            r = crop_analysis.get('recommendations')
-            if r:
-                recs.append(f"Crop recommendations: {r}")
+    fig.text(0.5, 0.03, "Page 1 of 4", ha="center", fontsize=8, color="#999")
 
-        if isinstance(soil_analysis, dict):
-            # Example simple guideline based on NPK (if numeric)
-            try:
-                if n is not None and float(n) < 2:
-                    recs.append('Apply nitrogen-rich fertilizer. Follow label rates by crop.')
-            except Exception:
-                pass
+    pdf.savefig(fig)
+    plt.close(fig)
 
-        if pest_risk:
-            recs.append(f"Pest risk summary: {pest_risk}")
+    ################################################
+    # PAGE 2 — NDVI TREND CHART
+    ################################################
+    fig2 = plt.figure(figsize=(8.27, 11.69))
+    fig2.patch.set_facecolor("white")
 
-        if irrigation:
-            recs.append(f"Irrigation suggestions: {irrigation}")
+    fig2.text(0.5, 0.95,
+              "Crop Health Analysis (NDVI Trend)",
+              ha="center", fontsize=18, fontweight="bold", color="#1B5E20")
 
-        if not recs:
-            recs = ['No automated recommendations available. Consider performing image/soil analysis for tailored advice.']
+    # Sample NDVI if none provided
+    if not ndvi_trend:
+        ndvi_trend = [0.42, 0.48, 0.55, 0.61, 0.67, 0.71, 0.76]
 
-        text_y = 0.85
-        for line in recs:
-            plt.text(0.05, text_y, f"- {line}", fontsize=12)
-            text_y -= 0.06
-            if text_y < 0.1:
-                # Save current page and start a new one for overflow
-                plt.axis('off')
-                pdf.savefig()
-                plt.close()
-                plt.figure(figsize=(11.7, 8.3))
-                text_y = 0.9
+    weeks = list(range(1, len(ndvi_trend) + 1))
 
-        plt.axis('off')
-        pdf.savefig()
-        plt.close()
+    ax1 = fig2.add_axes([0.1, 0.45, 0.8, 0.35])
+    ax1.plot(weeks, ndvi_trend, marker="o", linewidth=2.5, markersize=8, color="#2E7D32")
+    ax1.fill_between(weeks, ndvi_trend, alpha=0.3, color="#4CAF50")
+    ax1.set_title("NDVI Value Progression Over Growth Period", fontsize=12, fontweight="bold")
+    ax1.set_xlabel("Weeks After Sowing", fontsize=11)
+    ax1.set_ylabel("NDVI Value", fontsize=11)
+    ax1.grid(True, alpha=0.3)
+    ax1.set_ylim(0, 1)
 
+    # NDVI Interpretation Guide
+    fig2.text(0.1, 0.35, "NDVI Health Interpretation Guide:", fontsize=12, fontweight="bold")
+
+    ndvi_text = """
+0.0 - 0.2  : No vegetation / Water bodies
+0.2 - 0.3  : Poor vegetation stress
+0.4 - 0.5  : Moderate growth (monitoring needed)
+0.6 - 0.7  : Good healthy crop (optimal)
+0.75+      : Excellent vegetation (peak vigor)
+
+Current NDVI: {:.2f}  |  Trend: {}
+""".format(ndvi_trend[-1] if ndvi_trend else 0, "Improving ↗" if len(ndvi_trend) > 1 and ndvi_trend[-1] > ndvi_trend[-2] else "Stable →")
+
+    fig2.text(0.12, 0.25, ndvi_text, fontsize=10, family='monospace',
+              bbox=dict(boxstyle="round", facecolor="#E8F5E9", pad=0.7))
+
+    fig2.text(0.5, 0.03, "Page 2 of 4", ha="center", fontsize=8, color="#999")
+
+    pdf.savefig(fig2)
+    plt.close(fig2)
+
+    ################################################
+    # PAGE 3 — SOIL NUTRIENTS & COST ANALYSIS
+    ################################################
+    fig3 = plt.figure(figsize=(8.27, 11.69))
+    fig3.patch.set_facecolor("white")
+
+    fig3.text(0.5, 0.95,
+              "Soil Nutrients & Fertilizer Cost Analysis",
+              ha="center", fontsize=18, fontweight="bold", color="#1B5E20")
+
+    # Soil Nutrient Bar Chart
+    nutrients = ["Nitrogen (N)", "Phosphorus (P)", "Potassium (K)"]
+    values = [0, 0, 0]
+    soil_ph = "N/A"
+
+    if soil_analysis and isinstance(soil_analysis, dict):
+        values = [
+            float(soil_analysis.get("nitrogen", 0)) if soil_analysis.get("nitrogen") else 0,
+            float(soil_analysis.get("phosphorus", 0)) if soil_analysis.get("phosphorus") else 0,
+            float(soil_analysis.get("potassium", 0)) if soil_analysis.get("potassium") else 0
+        ]
+        soil_ph = soil_analysis.get("soil_ph", "N/A")
+
+    ax2 = fig3.add_axes([0.1, 0.50, 0.35, 0.30])
+    colors = ['#4CAF50', '#2196F3', '#FFC107']
+    bars = ax2.bar(["N", "P", "K"], values, color=colors, edgecolor='black', linewidth=1.5)
+    ax2.set_title("Soil Nutrient Levels (mg/kg)", fontsize=11, fontweight="bold")
+    ax2.set_ylabel("mg/kg", fontsize=10)
+    for bar, val in zip(bars, values):
+        height = bar.get_height()
+        ax2.text(bar.get_x() + bar.get_width()/2., height,
+                f'{val:.0f}', ha='center', va='bottom', fontsize=9, fontweight='bold')
+
+    # Fertilizer Cost Distribution
+    fert_names = []
+    fert_costs = []
+
+    if soil_analysis and isinstance(soil_analysis, dict):
+        fert_recs = soil_analysis.get("fertilizer_recommendations", [])
+        if fert_recs:
+            for f in fert_recs:
+                if isinstance(f, dict):
+                    fert_names.append(f.get("name", "")[:15])  # Truncate long names
+                    try:
+                        fert_costs.append(float(f.get("cost", 0)))
+                    except:
+                        fert_costs.append(0)
+
+    ax3 = fig3.add_axes([0.55, 0.50, 0.35, 0.30])
+
+    if fert_costs:
+        bars3 = ax3.barh(fert_names, fert_costs, color="#FF9800", edgecolor='black', linewidth=1.5)
+        ax3.set_title("Fertilizer Cost Distribution", fontsize=11, fontweight="bold")
+        ax3.set_xlabel("Cost (₹)", fontsize=10)
+        for i, (bar, cost) in enumerate(zip(bars3, fert_costs)):
+            width = bar.get_width()
+            ax3.text(width, bar.get_y() + bar.get_height()/2.,
+                    f' ₹{cost:.0f}', ha='left', va='center', fontsize=9, fontweight='bold')
+    else:
+        ax3.text(0.5, 0.5, "No cost data available", ha="center", va="center", fontsize=10)
+        ax3.set_xticks([])
+        ax3.set_yticks([])
+
+    # Soil & Cost Summary
+    fig3.text(0.1, 0.35, "📊 Soil & Cost Summary", fontsize=12, fontweight="bold", color="#333")
+
+    summary = f"""
+Soil pH Level          : {soil_ph}
+Total Fertilizer Cost  : ₹{total_cost:,.2f}
+Nitrogen (N)           : {values[0]:.0f} mg/kg
+Phosphorus (P)         : {values[1]:.0f} mg/kg
+Potassium (K)          : {values[2]:.0f} mg/kg
+Recommendation         : Balanced fertilization as per application plan
+"""
+
+    fig3.text(0.12, 0.25, summary, fontsize=10, family='monospace',
+              bbox=dict(boxstyle="round", facecolor="#FFF3E0", pad=0.8, edgecolor="#F57C00", linewidth=1.5))
+
+    fig3.text(0.5, 0.03, "Page 3 of 4", ha="center", fontsize=8, color="#999")
+
+    pdf.savefig(fig3)
+    plt.close(fig3)
+
+    ################################################
+    # PAGE 4 — IRRIGATION & ACTION PLAN
+    ################################################
+    fig4 = plt.figure(figsize=(8.27, 11.69))
+    fig4.patch.set_facecolor("white")
+
+    fig4.text(0.5, 0.95,
+              "Irrigation Advisory & Farmer Action Plan",
+              ha="center", fontsize=18, fontweight="bold", color="#1B5E20")
+
+    y = 0.88
+
+    # Irrigation Advisory
+    fig4.text(0.05, y, "💧 Irrigation Advisory", fontsize=13, fontweight="bold", color="#2196F3")
+    y -= 0.04
+
+    if irrigation_analysis and isinstance(irrigation_analysis, (dict, list)):
+        if isinstance(irrigation_analysis, dict):
+            irr = f"""
+Method       : {irrigation_analysis.get('method', 'N/A')}
+Frequency    : {irrigation_analysis.get('frequency', 'N/A')}
+Water Need   : {irrigation_analysis.get('water_need', 'N/A')}
+Next Due     : {irrigation_analysis.get('next_irrigation', 'N/A')}
+"""
+        else:
+            irr = "\n".join([f"• {item}" for item in irrigation_analysis[:4]])
+    else:
+        irr = "• Drip irrigation recommended\n• Frequency: 2-3 times per week\n• Water need: 40-50 mm per week"
+
+    fig4.text(0.07, y, irr, fontsize=10,
+              bbox=dict(boxstyle="round", facecolor="#E3F2FD", pad=0.8, edgecolor="#2196F3", linewidth=1.5))
+    y -= 0.20
+
+    # Farmer Checklist
+    fig4.text(0.05, y, "✅ Farmer Checklist", fontsize=13, fontweight="bold", color="#2E7D32")
+    y -= 0.04
+
+    actions = [
+        "☐ Inspect crop weekly for diseases and pests",
+        "☐ Apply fertilizers as per recommended schedule",
+        "☐ Maintain irrigation schedule as advised",
+        "☐ Record all farm inputs and expenses",
+        "☐ Report unusual symptoms to local extension officer",
+        "☐ Follow weather-based crop advisories",
+        "☐ Ensure proper drainage during heavy rainfall",
+        "☐ Collect soil samples before next crop"
+    ]
+
+    for a in actions:
+        fig4.text(0.07, y, a, fontsize=10)
+        y -= 0.035
+
+    y -= 0.03
+
+    # Support Information
+    fig4.text(0.05, y, "📞 Support & Resources", fontsize=13, fontweight="bold", color="#D32F2F")
+    y -= 0.04
+
+    support = """
+🎯 Kisan Helpline        : 1800-180-1551 (Toll Free)
+📱 SMS Advisory          : Send 'KRISHI' to 56161
+🌐 Web Portal            : www.krishimaharashtra.gov.in
+⚠️  Emergency Hotline    : 104 (For urgent pest/disease issues)
+📧 Support Email         : support@maharashtragov.in
+"""
+
+    fig4.text(0.07, y, support, fontsize=9, family='monospace',
+              bbox=dict(boxstyle="round", facecolor="#FFEBEE", pad=0.8, edgecolor="#D32F2F", linewidth=1.5))
+
+    fig4.text(0.5, 0.03,
+              "Page 4 of 4 | Government of Maharashtra | Printed Report for Farm Reference",
+              ha="center", fontsize=8, color="#999")
+
+    pdf.savefig(fig4)
+    plt.close(fig4)
+
+    ################################################
+    # FINALIZE PDF
+    ################################################
+    pdf.close()
     buffer.seek(0)
     return buffer.getvalue()
+
+
+def offer_report_download(report_bytes, filename=None):
+    """Offer a professional Streamlit download button for the generated PDF.
+
+    - If Streamlit is available in the environment (`st` in globals()), this will
+      render a clear download button with helpful tooltip and filename.
+    - Otherwise it will write the bytes to a local file named by `filename`.
+    """
+    if filename is None:
+        # safe default filename
+        filename = f"MahaAgro_Report_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf"
+
+    if 'st' in globals():
+        try:
+            st.download_button(
+                label="📄 Download PDF Report",
+                data=report_bytes,
+                file_name=filename,
+                mime='application/pdf',
+                help='High-quality A4 report (ready to print).',
+                key='mahaagro_pdf_download'
+            )
+        except Exception:
+            # If download button fails, offer a fallback message
+            try:
+                st.write(f"Download ready — save file as: **{filename}**")
+            except Exception:
+                pass
+    else:
+        # Non-Streamlit fallback: write file locally
+        try:
+            with open(filename, 'wb') as f:
+                f.write(report_bytes)
+            print(f"Report saved to {filename}")
+        except Exception as e:
+            print(f"Unable to save report to disk: {e}")
 
 def main():
     """Main Streamlit application"""
@@ -2453,53 +2594,66 @@ def main():
     if not st.session_state.authenticated:
         # Apply custom styling for auth pages
         st.markdown("""
-        <style>
-            div[data-testid="stForm"] {
-                background: linear-gradient(135deg, var(--card-bg) 0%, var(--surface-bg) 100%);
-                padding: 2rem;
-                border-radius: 15px;
-                border: 1px solid var(--border-color);
-                box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            }
-            .auth-header {
-                background: linear-gradient(135deg, var(--primary-green) 0%, var(--secondary-green) 100%);
-                padding: 2rem;
-                border-radius: 15px;
-                text-align: center;
-                margin-bottom: 2rem;
-                color: white;
-                box-shadow: 0 4px 15px rgba(46, 125, 50, 0.3);
-            }
-            .form-header {
-                color: var(--text-primary);
-                margin-bottom: 1.5rem;
-                text-align: center;
-            }
-            .stTextInput>div>div>input {
-                background: var(--card-bg) !important;
-                color: var(--text-primary) !important;
-                border: 1px solid var(--border-color) !important;
-                border-radius: 8px !important;
-                padding: 0.5rem 1rem !important;
-                margin-bottom: 1rem !important;
-            }
-            .stButton>button {
-                width: 100% !important;
-                margin-top: 1rem !important;
-            }
-            .auth-links {
-                text-align: center;
-                margin-top: 1rem;
-                color: var(--text-secondary);
-            }
-            .auth-links a {
-                color: var(--secondary-green);
-                text-decoration: none;
-            }
-            .auth-links a:hover {
-                text-decoration: underline;
-            }
-        </style>
+<style>
+    div[data-testid="stForm"] {
+        background: linear-gradient(135deg, var(--card-bg) 0%, var(--surface-bg) 100%);
+        padding: 2rem;
+        border-radius: 15px;
+        border: 1px solid var(--border-color);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+
+    .auth-header {
+        background: linear-gradient(135deg, var(--primary-green) 0%, var(--secondary-green) 100%);
+        padding: 2rem;
+        border-radius: 15px;
+        text-align: center;
+        margin-bottom: 2rem;
+        color: white;
+        box-shadow: 0 4px 15px rgba(46, 125, 50, 0.3);
+    }
+
+    .form-header {
+        color: var(--text-primary);
+        margin-bottom: 1.5rem;
+        text-align: center;
+    }
+
+    .stTextInput>div>div>input:focus {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+/* Focus effect on whole container */
+.stTextInput:focus-within {
+    border: 1px solid #2e7d32;
+    box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.25);
+    background: rgba(255, 255, 255, 0.07);
+}
+    }
+
+    .stButton>button {
+        width: 100% !important;
+        margin-top: 1rem !important;
+    }
+
+    .auth-links {
+        text-align: center;
+        margin-top: 1rem;
+        color: var(--text-secondary);
+    }
+
+    .auth-links a {
+        color: var(--secondary-green);
+        text-decoration: none;
+    }
+
+    .auth-links a:hover {
+        text-decoration: underline;
+    }
+</style>
+
+
         """, unsafe_allow_html=True)
 
         # Enhanced Header
@@ -2604,7 +2758,9 @@ def main():
         # Footer links
         st.markdown("""
         <div class="auth-links">
-            <p>Need help? Contact our support team at support@agrisystem.com</p>
+            <p>Need help ? Contact our support team Green Coders At <a>yashimamdar@gmail.com</a></p>
+            
+            
         </div>
         """, unsafe_allow_html=True)
         
