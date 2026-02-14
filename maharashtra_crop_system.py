@@ -34,45 +34,61 @@ from mongodb_config import MongoCropDB
 from mongodb_auth import MongoFarmerAuth
 from enhanced_pest_data import PEST_DATABASE, get_disease_severity
 
+# Logging setup
+import logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
-import requests
+# Configuration constants
+CONFIG = {
+    'API_TIMEOUT': 10,
+    'MAX_RETRIES': 3,
+    'REQUEST_CHUNK_SIZE': 8192,
+    'IMAGE_MAX_SIZE': (224, 224),
+    'BATCH_SIZE': 32,
+    'MODEL_CACHE_TTL': 3600,
+}
+
+# Security: Import missing dependencies
 import pickle
-import os
-import streamlit as st
 
 # --- Small helper to download large assets hosted externally ---
-def download_file(url, filename):
-    """Download a file from `url` to `filename` if it doesn't exist yet.
-    Uses a simple streaming download and creates parent directories as needed.
+def download_file(url: str, filename: str) -> None:
+    """Download a file from URL to filename with streaming and error handling.
+    
+    Args:
+        url: Source URL to download from
+        filename: Target file path
     """
     parent = os.path.dirname(filename)
-    if parent and not os.path.exists(parent):
+    if parent:
         os.makedirs(parent, exist_ok=True)
 
-    if not os.path.exists(filename):
-        try:
-            st.info(f"Downloading {os.path.basename(filename)} ...")
-        except Exception:
-            # streamlit may not be initialized when running in some contexts
-            print(f"Downloading {os.path.basename(filename)} ...")
+    if os.path.exists(filename):
+        logger.info(f"{os.path.basename(filename)} already exists")
+        return
 
-        # Use requests with streaming to avoid memory spikes
-        resp = requests.get(url, stream=True)
-        resp.raise_for_status()
-        with open(filename, "wb") as fh:
-            for chunk in resp.iter_content(chunk_size=8192):
-                if chunk:
-                    fh.write(chunk)
+    try:
+        st.info(f"Downloading {os.path.basename(filename)}...")
+    except Exception:
+        logger.info(f"Downloading {os.path.basename(filename)}...")
 
+    for attempt in range(CONFIG['MAX_RETRIES']):
         try:
-            st.success(f"{os.path.basename(filename)} downloaded successfully.")
-        except Exception:
-            print(f"{os.path.basename(filename)} downloaded successfully.")
-    else:
-        try:
-            st.info(f"{os.path.basename(filename)} already exits")
-        except Exception:
-            print(f"{os.path.basename(filename)} already exists.")
+            resp = requests.get(url, stream=True, timeout=CONFIG['API_TIMEOUT'])
+            resp.raise_for_status()
+            with open(filename, "wb") as fh:
+                for chunk in resp.iter_content(chunk_size=CONFIG['REQUEST_CHUNK_SIZE']):
+                    if chunk:
+                        fh.write(chunk)
+            logger.info(f"{os.path.basename(filename)} downloaded successfully")
+            st.success(f"{os.path.basename(filename)} ready")
+            return
+        except Exception as e:
+            logger.warning(f"Download attempt {attempt+1} failed: {e}")
+            if attempt == CONFIG['MAX_RETRIES'] - 1:
+                logger.error(f"Failed to download {filename} after {CONFIG['MAX_RETRIES']} attempts")
+                raise
 
 
 # If you keep large assets on Google Drive (recommended), download them into
@@ -97,76 +113,77 @@ def load_model():
     - Prefer the model inside `maharashtra_agri_deployment/models/` (download target)
     - If missing, fall back to `fertilizer_prediction_model.pkl` in repo root
     - If neither exists, try the original huggingface URL as a last resort
-    After download, ensure a copy exists at the fallback path for any other
-    code that expects the model at the repo root.
     """
     preferred = os.path.join("maharashtra_agri_deployment", "models", "fertilizer_prediction_model.pkl")
     fallback = "fertilizer_prediction_model.pkl"
-
     model_path = preferred if os.path.exists(preferred) else fallback
 
-    # If model not present at either path, try the huggingface fallback
     if not os.path.exists(model_path):
         url = "https://huggingface.co/Inamdar007/newfiledata/resolve/main/fertilizer_prediction_model.pkl"
         try:
-            st.info("Downloading model file (fallback)...")
-        except Exception:
-            print("Downloading model file (fallback)...")
-        resp = requests.get(url, stream=True)
-        resp.raise_for_status()
-        with open(preferred, "wb") as fh:
-            for chunk in resp.iter_content(chunk_size=8192):
-                if chunk:
-                    fh.write(chunk)
-        model_path = preferred
+            logger.info(f"Downloading model from {url}")
+            st.info("Downloading model file...")
+        except Exception as e:
+            logger.warning(f"Streamlit not available: {e}")
+        
+        try:
+            resp = requests.get(url, stream=True, timeout=CONFIG['API_TIMEOUT'])
+            resp.raise_for_status()
+            os.makedirs(os.path.dirname(preferred), exist_ok=True)
+            with open(preferred, "wb") as fh:
+                for chunk in resp.iter_content(chunk_size=CONFIG['REQUEST_CHUNK_SIZE']):
+                    if chunk:
+                        fh.write(chunk)
+            model_path = preferred
+            logger.info("Model downloaded successfully")
+        except Exception as e:
+            logger.error(f"Failed to download model: {e}")
+            raise
 
-    # Ensure a copy exists at the fallback location for backward compatibility
     try:
-        if os.path.exists(model_path) and model_path != fallback:
-            if not os.path.exists(fallback):
-                shutil.copyfile(model_path, fallback)
-    except Exception:
-        # Non-fatal: proceed to load from model_path
-        pass
+        if os.path.exists(model_path) and model_path != fallback and not os.path.exists(fallback):
+            shutil.copyfile(model_path, fallback)
+    except Exception as e:
+        logger.warning(f"Could not create fallback copy: {e}")
 
-    # Finally, load the model
-    with open(model_path, "rb") as f:
-        model = pickle.load(f)
-    return model
+    try:
+        with open(model_path, "rb") as f:
+            model = pickle.load(f)
+        logger.info(f"Model loaded from {model_path}")
+        return model
+    except Exception as e:
+        logger.error(f"Failed to load model: {e}")
+        raise
 
 
 
 
 # --- Secure Secrets Setup (for Streamlit Cloud + Local Dev) ---
-import os
-from dotenv import load_dotenv
+load_dotenv()
 
 try:
-    import streamlit as st
-    # ✅ Use Streamlit Secrets if running on Streamlit Cloud
+    # Use Streamlit Secrets if running on Streamlit Cloud
     if st.secrets and "MONGODB_URI" in st.secrets:
         os.environ["MONGODB_URI"] = st.secrets["MONGODB_URI"]
-    else:
-        load_dotenv()  # ✅ Load from .env during local development
-except Exception:
-    load_dotenv()
+except Exception as e:
+    logger.debug(f"Streamlit secrets not available: {e}")
 
-# ✅ MongoDB connection setup
+# MongoDB connection setup
 from pymongo import MongoClient
 
-mongo_uri = os.getenv(
-    "MONGODB_URI",
-    "mongodb+srv://yashimamdar_db_user:paulvrWJZqKz8SIJ@cluster0.r5cckg1.mongodb.net/maharashtra_agri_db?retryWrites=true&w=majority&appName=Cluster0"
-)
+mongo_uri = os.getenv("MONGODB_URI")
+if not mongo_uri:
+    logger.warning("MONGODB_URI not found in environment. Using default (NOT RECOMMENDED for production)")
+    mongo_uri = "mongodb+srv://yashimamdar_db_user:paulvrWJZqKz8SIJ@cluster0.r5cckg1.mongodb.net/maharashtra_agri_db?retryWrites=true&w=majority&appName=Cluster0"
 
-client = MongoClient(mongo_uri)
-db = client["maharashtra_agri_db"]
-
-# ---------------------------------------------------------------
-
-
-# Load environment variables
-load_dotenv()
+try:
+    client = MongoClient(mongo_uri, serverSelectionTimeoutMS=5000)
+    db = client["maharashtra_agri_db"]
+    logger.info("MongoDB connection initialized")
+except Exception as e:
+    logger.error(f"Failed to connect to MongoDB: {e}")
+    client = None
+    db = None
 
 # Configure tensorflow to avoid memory issues
 tf.config.threading.set_inter_op_parallelism_threads(1)
@@ -175,18 +192,29 @@ tf.config.threading.set_intra_op_parallelism_threads(1)
 # Suppress plotly warnings
 warnings.filterwarnings('ignore', message='.*keyword arguments.*')
 
-def apply_dark_theme(fig):
-    """Apply a consistent dark theme to all Plotly graphs"""
-    fig.update_layout(
-        template='plotly_dark',
-        plot_bgcolor='rgba(15,15,15,1)',
-        paper_bgcolor='rgba(15,15,15,1)',
-        font=dict(color='white', size=14),
-        xaxis=dict(gridcolor='rgba(80,80,80,0.3)', color='white'),
-        yaxis=dict(gridcolor='rgba(80,80,80,0.3)', color='white'),
-        legend=dict(font=dict(color='white'))
-    )
-    return fig
+def apply_dark_theme(fig: go.Figure) -> go.Figure:
+    """Apply a consistent dark theme to all Plotly graphs.
+    
+    Args:
+        fig: Plotly figure object
+        
+    Returns:
+        Updated figure with dark theme applied
+    """
+    try:
+        fig.update_layout(
+            template='plotly_dark',
+            plot_bgcolor='rgba(15,15,15,1)',
+            paper_bgcolor='rgba(15,15,15,1)',
+            font=dict(color='white', size=14),
+            xaxis=dict(gridcolor='rgba(80,80,80,0.3)', color='white'),
+            yaxis=dict(gridcolor='rgba(80,80,80,0.3)', color='white'),
+            legend=dict(font=dict(color='white'))
+        )
+        return fig
+    except Exception as e:
+        logger.error(f"Error applying dark theme: {e}")
+        return fig
 
 # Page configuration
 st.set_page_config(
@@ -501,14 +529,22 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 class MaharashtraAgriculturalSystem:
-    def __init__(self):
-        """Initialize the comprehensive agricultural system"""
+    def __init__(self) -> None:
+        """Initialize the comprehensive agricultural system.
+        
+        Sets up database connections, loads ML models, and initializes
+        agricultural data (districts, crops, fertilizers, pest factors).
+        """
+        logger.info("Initializing MaharashtraAgriculturalSystem")
         self.setup_database()
         self.load_models()
         
-        # API Keys
+        # API Keys from environment variables
         self.openweather_api_key = os.getenv('OPENWEATHER_API_KEY', 'your_api_key_here')
         self.agromonitoring_api_key = os.getenv('AGROMONITORING_API_KEY', 'your_api_key_here')
+        
+        if self.openweather_api_key == 'your_api_key_here':
+            logger.warning("OPENWEATHER_API_KEY not configured. Set environment variable.")
         
         # Maharashtra districts and zones (all 36 districts)
         self.maharashtra_districts = {
@@ -590,36 +626,53 @@ class MaharashtraAgriculturalSystem:
             'rainfall': {'low': (0, 10), 'medium': (10, 50), 'high': (50, 200)}
         }
 
-    def setup_database(self):
-        """Setup MongoDB database connection"""
-        from mongodb_config import MongoCropDB
-        self.mongo_db = MongoCropDB()
+    def setup_database(self) -> None:
+        """Setup MongoDB database connection with error handling.
         
-        # Initialize collections if needed
+        Initializes MongoDB connection and tests connectivity by performing
+        a test insert/delete operation.
+        """
         try:
-            # Test connection by inserting and retrieving a test document
+            from mongodb_config import MongoCropDB
+            self.mongo_db = MongoCropDB()
+            
             if self.mongo_db.connected and hasattr(self.mongo_db, 'db') and self.mongo_db.db is not None:
                 test_doc = {"test": "connection", "timestamp": datetime.now()}
                 result = self.mongo_db.db.test_collection.insert_one(test_doc)
                 self.mongo_db.db.test_collection.delete_one({"_id": result.inserted_id})
-                print("[OK] MongoDB test connection successful!")
+                logger.info("MongoDB connection test successful")
+            else:
+                logger.warning("MongoDB connection not properly initialized")
         except Exception as e:
-            print(f"[WARNING] MongoDB connection test failed: {str(e)}")
+            logger.error(f"MongoDB connection failed: {e}")
+            self.mongo_db = None
 
-    def load_models(self):
-        """Load AI models"""
+    def load_models(self) -> None:
+        """Load AI models with fallback strategy.
+        
+        Attempts to load the keras disease detection model and class names.
+        Falls back to default class names if files not found.
+        """
         try:
             if os.path.exists('best_model.h5'):
                 self.disease_model = tf.keras.models.load_model('best_model.h5')
+                logger.info("Disease detection model loaded successfully")
+                
                 if os.path.exists('class_names.txt'):
                     with open('class_names.txt', 'r') as f:
                         self.class_names = [line.strip() for line in f.readlines()]
+                    logger.info(f"Loaded {len(self.class_names)} class names")
                 else:
                     self.class_names = ['Healthy', 'Early_Blight', 'Late_Blight', 'Bacterial_Spot']
+                    logger.warning("Using default class names")
             else:
                 self.disease_model = None
                 self.class_names = ['Healthy', 'Early_Blight', 'Late_Blight', 'Bacterial_Spot']
+                logger.warning("Model file not found. Using fallback class names.")
         except Exception as e:
+            logger.error(f"Error loading models: {e}")
+            self.disease_model = None
+            self.class_names = ['Healthy', 'Early_Blight', 'Late_Blight', 'Bacterial_Spot']
             self.disease_model = None
             self.class_names = ['Healthy', 'Early_Blight', 'Late_Blight', 'Bacterial_Spot']
 
@@ -634,8 +687,15 @@ class MaharashtraAgriculturalSystem:
             'forecast': self.generate_weather_forecast(district, days=5)
         }
     
-    def get_current_weather(self, district):
-        """Get current weather from API or simulation"""
+    def get_current_weather(self, district: str) -> dict:
+        """Get current weather from API or simulation.
+        
+        Args:
+            district: Maharashtra district name
+            
+        Returns:
+            Dictionary with weather metrics (temperature, humidity, etc.)
+        """
         try:
             if self.openweather_api_key != 'your_api_key_here':
                 url = f"http://api.openweathermap.org/data/2.5/weather"
@@ -778,8 +838,15 @@ class MaharashtraAgriculturalSystem:
         
         return weather_data
     
-    def analyze_crop_image(self, uploaded_file):
-        """Enhanced crop image analysis with improved accuracy and validation"""
+    def analyze_crop_image(self, uploaded_file) -> dict:
+        """Enhanced crop image analysis with validation and error handling.
+        
+        Args:
+            uploaded_file: Streamlit uploaded file object
+            
+        Returns:
+            Dictionary with disease detection results and metadata
+        """
         try:
             if uploaded_file is not None:
                 # Enhanced validation and preprocessing
@@ -1399,8 +1466,20 @@ class MaharashtraAgriculturalSystem:
         else:
             return "Critical vegetation health", "#F44336"
 
-    def analyze_soil_health(self, ph, nitrogen, phosphorus, potassium, farm_area=1.0):
-        """Advanced soil health analysis with scientific accuracy and precision"""
+    def analyze_soil_health(self, ph: float, nitrogen: float, phosphorus: float, 
+                           potassium: float, farm_area: float = 1.0) -> dict:
+        """Advanced soil health analysis with scientific accuracy and precision.
+        
+        Args:
+            ph: Soil pH value (0-14)
+            nitrogen: Nitrogen level in mg/kg
+            phosphorus: Phosphorus level in mg/kg 
+            potassium: Potassium level in mg/kg
+            farm_area: Farm area in hectares (default: 1.0)
+            
+        Returns:
+            Dictionary with soil analysis, recommendations, and fertilizer suggestions
+        """
         recommendations = []
         fertilizer_recommendations = []
         
